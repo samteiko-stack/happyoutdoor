@@ -20,14 +20,22 @@ export default async function HomePage() {
     }
   }
   
-  const templates = await prisma.template.findMany({
-    where: { isPublished: true },
-    orderBy: { createdAt: "desc" },
-    take: 6,
-  });
+  let templates = [];
+  let productCount = 0;
+  let categoryCount = 0;
 
-  const productCount = await prisma.product.count();
-  const categoryCount = await prisma.category.count();
+  try {
+    templates = await prisma.template.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: "desc" },
+      take: 6,
+    });
+
+    productCount = await prisma.product.count();
+    categoryCount = await prisma.category.count();
+  } catch (error) {
+    console.error("Database query error:", error);
+  }
 
   return (
     <div className="min-h-screen">
