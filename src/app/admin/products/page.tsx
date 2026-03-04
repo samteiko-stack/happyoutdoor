@@ -128,7 +128,7 @@ export default function AdminProductsPage() {
     setEditing(product.id);
     setForm({
       name: product.name,
-      categoryId: product.categoryId,
+      categoryId: product.categoryId || "",
       description: product.description || "",
       price: product.price,
       affiliateLink: product.affiliateLink || "",
