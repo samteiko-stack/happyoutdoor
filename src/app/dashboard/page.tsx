@@ -12,19 +12,26 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  // Get user's designs
-  const designs = await prisma.design.findMany({
-    where: { userId: session.user.id },
-    orderBy: { updatedAt: "desc" },
-    take: 6,
-  });
+  let designs: any[] = [];
+  let templates: any[] = [];
 
-  // Get published templates
-  const templates = await prisma.template.findMany({
-    where: { isPublished: true },
-    orderBy: { createdAt: "desc" },
-    take: 3,
-  });
+  try {
+    // Get user's designs
+    designs = await prisma.design.findMany({
+      where: { userId: session.user.id },
+      orderBy: { updatedAt: "desc" },
+      take: 6,
+    });
+
+    // Get published templates
+    templates = await prisma.template.findMany({
+      where: { isPublished: true },
+      orderBy: { createdAt: "desc" },
+      take: 3,
+    });
+  } catch (error) {
+    console.error("Dashboard data error:", error);
+  }
 
   const firstName = session.user.name?.split(" ")[0] || "there";
   const timeOfDay = new Date().getHours() < 12 ? "morning" : new Date().getHours() < 18 ? "afternoon" : "evening";
