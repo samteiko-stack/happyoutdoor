@@ -20,7 +20,7 @@ export default async function HomePage() {
     }
   }
   
-  let templates = [];
+  let templates: any[] = [];
   let productCount = 0;
   let categoryCount = 0;
 
