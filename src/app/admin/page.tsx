@@ -34,7 +34,13 @@ async function getRecentDesigns() {
     include: {
       user: { select: { name: true, email: true } },
     },
-  });
+  }) as Promise<Array<{
+    id: string;
+    name: string;
+    user: { name: string | null; email: string };
+    isPaid: boolean;
+    createdAt: Date;
+  }>>;
 }
 
 export default async function AdminOverviewPage() {
