@@ -20,7 +20,14 @@ export default async function HomePage() {
     }
   }
   
-  let templates: any[] = [];
+  let templates: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    balconyWidthCm: number;
+    balconyHeightCm: number;
+    layoutData: string;
+  }> = [];
   let productCount = 0;
   let categoryCount = 0;
 
