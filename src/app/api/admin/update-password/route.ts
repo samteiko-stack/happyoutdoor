@@ -31,12 +31,12 @@ export async function PUT(req: NextRequest) {
       where: { id: session.user.id },
     });
 
-    if (!user || !user.password) {
+    if (!user || !user.passwordHash) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
     // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, user.password);
+    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!isValid) {
       return NextResponse.json(
         { error: "Current password is incorrect" },
@@ -48,7 +48,7 @@ export async function PUT(req: NextRequest) {
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { password: hashedPassword },
+      data: { passwordHash: hashedPassword },
     });
 
     return NextResponse.json({ success: true });
