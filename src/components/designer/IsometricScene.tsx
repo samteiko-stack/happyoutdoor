@@ -60,7 +60,8 @@ function PlantShape() {
   );
 }
 
-function LightShape() {
+function LightShape({ isNight = false }: { isNight?: boolean }) {
+  const emissiveIntensity = isNight ? 1.2 : 0.4;
   return (
     <group>
       <mesh position={[0, 0.04, 0]}>
@@ -73,8 +74,11 @@ function LightShape() {
       </mesh>
       <mesh position={[0, 0.48, 0]}>
         <cylinderGeometry args={[0.04, 0.14, 0.14, 10]} />
-        <meshStandardMaterial color="#f0d060" emissive="#e8c040" emissiveIntensity={0.4} />
+        <meshStandardMaterial color="#f0d060" emissive="#e8c040" emissiveIntensity={emissiveIntensity} />
       </mesh>
+      {isNight && (
+        <pointLight position={[0, 0.48, 0]} intensity={1.5} color="#f0d060" distance={2} decay={2} />
+      )}
     </group>
   );
 }
@@ -124,7 +128,7 @@ function BoxShape() {
 }
 
 // FBX Model Loader
-function FBXModel({ url }: { url: string }) {
+function FBXModel({ url, targetWidthCm, targetHeightCm }: { url: string; targetWidthCm: number; targetHeightCm: number }) {
   const fbx = useFBX(url);
   
   const processedModel = useMemo(() => {
@@ -135,11 +139,13 @@ function FBXModel({ url }: { url: string }) {
     // Calculate bounding box to normalize scale
     const box = new THREE.Box3().setFromObject(clone);
     const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
     
-    // Target size: most furniture should be around 0.4-0.6 units (40-60cm)
-    const targetSize = 0.5;
-    const scale = maxDim > 0 ? targetSize / maxDim : 1;
+    // Scale based on height only
+    const targetSize = targetHeightCm * 0.01; // Convert cm to units (1 unit = 100cm)
+    
+    // Scale based on the model's height (Y dimension)
+    const modelHeight = size.y;
+    const scale = modelHeight > 0 ? targetSize / modelHeight : 1;
     
     // Center the model
     const center = box.getCenter(new THREE.Vector3());
@@ -167,7 +173,7 @@ function FBXModel({ url }: { url: string }) {
     });
     
     return clone;
-  }, [fbx]);
+  }, [fbx, targetWidthCm, targetHeightCm]);
   
   if (!processedModel) return <BoxShape />;
   
@@ -175,7 +181,7 @@ function FBXModel({ url }: { url: string }) {
 }
 
 // GLTF/GLB Model Loader
-function GLTFModel({ url }: { url: string }) {
+function GLTFModel({ url, targetWidthCm, targetHeightCm }: { url: string; targetWidthCm: number; targetHeightCm: number }) {
   const { scene } = useGLTF(url);
   
   const processedModel = useMemo(() => {
@@ -186,11 +192,13 @@ function GLTFModel({ url }: { url: string }) {
     // Calculate bounding box to normalize scale
     const box = new THREE.Box3().setFromObject(clone);
     const size = box.getSize(new THREE.Vector3());
-    const maxDim = Math.max(size.x, size.y, size.z);
     
-    // Target size: most furniture should be around 0.4-0.6 units (40-60cm)
-    const targetSize = 0.5;
-    const scale = maxDim > 0 ? targetSize / maxDim : 1;
+    // Scale based on height only
+    const targetSize = targetHeightCm * 0.01; // Convert cm to units (1 unit = 100cm)
+    
+    // Scale based on the model's height (Y dimension)
+    const modelHeight = size.y;
+    const scale = modelHeight > 0 ? targetSize / modelHeight : 1;
     
     // Center the model
     const center = box.getCenter(new THREE.Vector3());
@@ -207,7 +215,7 @@ function GLTFModel({ url }: { url: string }) {
     });
     
     return clone;
-  }, [scene]);
+  }, [scene, targetWidthCm, targetHeightCm]);
   
   if (!processedModel) return <BoxShape />;
   
@@ -215,18 +223,18 @@ function GLTFModel({ url }: { url: string }) {
 }
 
 // 3D Model Loader Component - supports GLB, GLTF, FBX
-function Model3D({ url }: { url: string }) {
+function Model3D({ url, widthCm, heightCm }: { url: string; widthCm: number; heightCm: number }) {
   const extension = url.split('.').pop()?.toLowerCase();
   
   if (extension === 'fbx') {
-    return <FBXModel url={url} />;
+    return <FBXModel url={url} targetWidthCm={widthCm} targetHeightCm={heightCm} />;
   } else {
-    return <GLTFModel url={url} />;
+    return <GLTFModel url={url} targetWidthCm={widthCm} targetHeightCm={heightCm} />;
   }
 }
 
 // Error boundary wrapper for 3D models
-function SafeModel3D({ url }: { url: string }) {
+function SafeModel3D({ url, widthCm, heightCm }: { url: string; widthCm: number; heightCm: number }) {
   const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
@@ -245,7 +253,7 @@ function SafeModel3D({ url }: { url: string }) {
         setHasError(true);
       }}
     >
-      <Model3D url={url} />
+      <Model3D url={url} widthCm={widthCm} heightCm={heightCm} />
     </ErrorBoundary>
   );
 }
@@ -276,10 +284,10 @@ class ErrorBoundary extends React.Component<
   }
 }
 
-function ProductShape({ categorySlug, productName, modelUrl }: { categorySlug: string; productName: string; modelUrl?: string | null }) {
+function ProductShape({ categorySlug, productName, modelUrl, widthCm, heightCm, isNight = false }: { categorySlug: string; productName: string; modelUrl?: string | null; widthCm: number; heightCm: number; isNight?: boolean }) {
   // If a 3D model is available, use it
   if (modelUrl) {
-    return <SafeModel3D url={modelUrl} />;
+    return <SafeModel3D url={modelUrl} widthCm={widthCm} heightCm={heightCm} />;
   }
   
   // Otherwise, fall back to procedural shapes
@@ -291,7 +299,7 @@ function ProductShape({ categorySlug, productName, modelUrl }: { categorySlug: s
     case "seating": return <ChairShape />;
     case "tables": return <TableShape />;
     case "plants": return <PlantShape />;
-    case "lighting": return <LightShape />;
+    case "lighting": return <LightShape isNight={isNight} />;
     case "planters": return <PlanterShape />;
     case "decor": return <RugShape />;
     default: return <BoxShape />;
@@ -604,6 +612,7 @@ function DraggableProduct({
   roomD,
   isSelected,
   onSelect,
+  isNight,
 }: {
   item: any;
   product: any;
@@ -611,6 +620,7 @@ function DraggableProduct({
   roomD: number;
   isSelected: boolean;
   onSelect: () => void;
+  isNight: boolean;
 }) {
   const groupRef = useRef<THREE.Group>(null);
   const { camera, gl, controls, raycaster, scene } = useThree();
@@ -803,7 +813,14 @@ function DraggableProduct({
         if (!isDragging) onSelect();
       }}
     >
-      <ProductShape categorySlug={product.category?.slug || "decor"} productName={product.name} modelUrl={product.modelUrl} />
+      <ProductShape 
+        categorySlug={product.category?.slug || "decor"} 
+        productName={product.name} 
+        modelUrl={product.modelUrl}
+        widthCm={product.widthCm}
+        heightCm={product.heightCm}
+        isNight={isNight}
+      />
       
       {/* Selection highlight - glowing outline */}
       {isSelected && (
@@ -843,12 +860,23 @@ function DraggableProduct({
 // ----- SCENE -----
 
 function Scene() {
-  const { balconyWidthCm, balconyHeightCm, items, products, selectedItemId, setSelectedItemId } =
+  const { balconyWidthCm, balconyHeightCm, items, products, selectedItemId, setSelectedItemId, timeOfDay } =
     useDesignerStore();
 
   const roomW = balconyWidthCm * CM;
   const roomD = balconyHeightCm * CM;
   const maxDim = Math.max(roomW, roomD);
+
+  // Lighting configuration based on time of day
+  const isNight = timeOfDay === 'night';
+  const ambientIntensity = isNight ? 0.3 : 0.9;
+  const mainLightIntensity = isNight ? 0.8 : 2.2;
+  const fillLightIntensity = isNight ? 0.3 : 1.0;
+  const pointLightIntensity = isNight ? 0.2 : 0.6;
+  const hemisphereIntensity = isNight ? 0.2 : 0.8;
+  const backgroundColor = isNight ? '#0a0e1a' : '#d8e4d8';
+  const lightColor = isNight ? '#8899cc' : '#ffffff';
+  const fillLightColor = isNight ? '#6677aa' : '#fffef8';
 
   return (
     <>
@@ -869,12 +897,12 @@ function Scene() {
         zoomSpeed={1}
       />
 
-      {/* Lights - brighter, more natural */}
-      <ambientLight intensity={0.9} color="#ffffff" />
+      {/* Lights - dynamic based on time of day */}
+      <ambientLight intensity={ambientIntensity} color={lightColor} />
       <directionalLight
         position={[6, 10, 8]}
-        intensity={2.2}
-        color="#ffffff"
+        intensity={mainLightIntensity}
+        color={lightColor}
         castShadow
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-maxDim * 2.5}
@@ -883,12 +911,12 @@ function Scene() {
         shadow-camera-bottom={-maxDim * 2.5}
         shadow-bias={-0.0001}
       />
-      <directionalLight position={[-4, 6, -3]} intensity={1.0} color="#fffef8" />
-      <pointLight position={[0, 2, 0]} intensity={0.6} color="#ffffff" distance={6} />
-      <hemisphereLight args={["#ffffff", "#d8d8d8", 0.8]} />
+      <directionalLight position={[-4, 6, -3]} intensity={fillLightIntensity} color={fillLightColor} />
+      <pointLight position={[0, 2, 0]} intensity={pointLightIntensity} color={lightColor} distance={6} />
+      <hemisphereLight args={[lightColor, isNight ? "#1a1e2a" : "#d8d8d8", hemisphereIntensity]} />
 
-      {/* Background - light greenish gradient */}
-      <color attach="background" args={["#d8e4d8"]} />
+      {/* Background - dynamic based on time of day */}
+      <color attach="background" args={[backgroundColor]} />
 
       {/* Balcony */}
       <SmartWallsBalcony width={roomW} depth={roomD} />
@@ -909,6 +937,7 @@ function Scene() {
             roomD={roomD}
             isSelected={isSelected}
             onSelect={() => setSelectedItemId(isSelected ? null : item.id)}
+            isNight={isNight}
           />
         );
       })}

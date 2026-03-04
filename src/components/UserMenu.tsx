@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { MediaImageList, DesignPencil, Settings, DashboardDots, LogOut, NavArrowDown } from "iconoir-react";
+import { MediaImageList, DesignPencil, Settings, ViewGrid, LogOut, NavArrowDown } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -92,7 +92,7 @@ export function UserMenu() {
         {isAdmin && (
           <DropdownMenuItem asChild>
             <Link href="/admin" className="cursor-pointer">
-              <DashboardDots width={16} height={16} className="mr-2" />
+              <ViewGrid width={16} height={16} className="mr-2" />
               Admin Dashboard
             </Link>
           </DropdownMenuItem>

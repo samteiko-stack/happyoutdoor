@@ -1,6 +1,6 @@
 "use client";
 
-import { Undo, Redo, RotateCameraLeft, RotateCameraRight, Trash, Minus, Plus } from "iconoir-react";
+import { Undo, Redo, RotateCameraLeft, RotateCameraRight, Trash, Minus, Plus, SunLight, HalfMoon } from "iconoir-react";
 import { useDesignerStore } from "@/lib/designer-store";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
@@ -20,6 +20,8 @@ export function ToolBar() {
     balconyWidthCm,
     balconyHeightCm,
     setBalconySize,
+    timeOfDay,
+    setTimeOfDay,
   } = useDesignerStore();
 
   // Calculate total price
@@ -61,6 +63,30 @@ export function ToolBar() {
       >
         <Trash width={16} height={16} />
         <span className="ml-1 text-xs">Delete</span>
+      </Button>
+
+      <Separator orientation="vertical" className="mx-2 h-6" />
+
+      {/* Day/Night Toggle */}
+      <Button
+        variant={timeOfDay === 'day' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => setTimeOfDay('day')}
+        title="Day mode"
+        className={timeOfDay === 'day' ? 'bg-primary' : ''}
+      >
+        <SunLight width={16} height={16} />
+        <span className="ml-1 text-xs">Day</span>
+      </Button>
+      <Button
+        variant={timeOfDay === 'night' ? 'default' : 'ghost'}
+        size="sm"
+        onClick={() => setTimeOfDay('night')}
+        title="Night mode"
+        className={timeOfDay === 'night' ? 'bg-primary' : ''}
+      >
+        <HalfMoon width={16} height={16} />
+        <span className="ml-1 text-xs">Night</span>
       </Button>
 
       <Separator orientation="vertical" className="mx-2 h-6" />

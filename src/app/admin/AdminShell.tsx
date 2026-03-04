@@ -3,13 +3,13 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { DashboardDots, Package, Folder, MultiplePages, Group, Settings } from "iconoir-react";
+import { ViewGrid, Package, Folder, MultiplePages, Group, Settings } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import type { Session } from "next-auth";
 
 const navItems = [
-  { href: "/admin", label: "Overview", icon: DashboardDots },
+  { href: "/admin", label: "Overview", icon: ViewGrid },
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/categories", label: "Categories", icon: Folder },
   { href: "/admin/templates", label: "Templates", icon: MultiplePages },

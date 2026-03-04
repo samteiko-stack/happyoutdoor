@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { Sora } from "next/font/google";
+import { DM_Sans } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "@/components/providers/SessionProvider";
 import { Toaster } from "@/components/ui/sonner";
 
-const sora = Sora({
-  variable: "--font-sora",
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
   subsets: ["latin"],
 });
 
@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${sora.variable} font-sans antialiased`}>
+      <body className={`${dmSans.variable} font-sans antialiased`}>
         <SessionProvider>
           {children}
           <Toaster 

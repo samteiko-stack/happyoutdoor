@@ -58,6 +58,10 @@ interface DesignerState {
   doorWall: 'left' | 'right' | 'back' | 'front';
   setDoorWall: (wall: 'left' | 'right' | 'back' | 'front') => void;
 
+  // Time of day
+  timeOfDay: 'day' | 'night';
+  setTimeOfDay: (time: 'day' | 'night') => void;
+
   // Items on the canvas
   items: CanvasItem[];
   setItems: (items: CanvasItem[]) => void;
@@ -119,6 +123,9 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   doorWall: 'back',
   setDoorWall: (wall) => set({ doorWall: wall }),
+
+  timeOfDay: 'day',
+  setTimeOfDay: (time) => set({ timeOfDay: time }),
 
   items: [],
   setItems: (items) => set({ items }),

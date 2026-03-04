@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
 import { UserMenu } from "@/components/UserMenu";
-import { EditPencil, FloppyDisk, DashboardDots } from "iconoir-react";
+import { EditPencil, FloppyDisk, ViewGrid } from "iconoir-react";
 
 const Canvas = dynamic(
   () => import("@/components/designer/Canvas").then((mod) => ({ default: mod.Canvas })),
@@ -183,7 +183,7 @@ export function DesignerContent() {
         <div className="flex items-center gap-2">
           <Link href="/dashboard">
             <Button variant="outline" size="sm" className="gap-2">
-              <DashboardDots width={16} height={16} />
+              <ViewGrid width={16} height={16} />
               Dashboard
             </Button>
           </Link>

@@ -9,8 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Trash, User } from "iconoir-react";
+import { Plus, Trash, User, WarningTriangle } from "iconoir-react";
 
 interface Admin {
   id: string;
@@ -30,6 +31,7 @@ export default function AdminSettingsPage() {
   const [newAdminEmail, setNewAdminEmail] = useState("");
   const [newAdminName, setNewAdminName] = useState("");
   const [addingAdmin, setAddingAdmin] = useState(false);
+  const [confirmAdminAdd, setConfirmAdminAdd] = useState(false);
 
   // Update profile state
   const [profileName, setProfileName] = useState("");
@@ -79,6 +81,11 @@ export default function AdminSettingsPage() {
       return;
     }
 
+    if (!confirmAdminAdd) {
+      toast.error("Please confirm you want to grant admin access");
+      return;
+    }
+
     setAddingAdmin(true);
     try {
       const res = await fetch("/api/admin/add-admin", {
@@ -95,6 +102,7 @@ export default function AdminSettingsPage() {
         setAddDialogOpen(false);
         setNewAdminEmail("");
         setNewAdminName("");
+        setConfirmAdminAdd(false);
         loadData();
       } else {
         const error = await res.json();
@@ -338,7 +346,19 @@ export default function AdminSettingsPage() {
                     Create a new admin account. They will receive an email to set their password.
                   </DialogDescription>
                 </DialogHeader>
-                <div className="space-y-4 py-4">
+                
+                {/* Warning Banner */}
+                <div className="bg-destructive/10 border border-destructive/20 rounded p-4 flex gap-3">
+                  <WarningTriangle width={20} height={20} className="text-destructive flex-shrink-0 mt-0.5" />
+                  <div className="text-sm">
+                    <p className="font-semibold text-destructive mb-1">Admin Access Warning</p>
+                    <p className="text-muted-foreground">
+                      Admins have full access to manage products, categories, templates, users, and all platform settings. Only grant admin access to trusted individuals.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4 py-2">
                   <div className="space-y-2">
                     <Label htmlFor="new-admin-email">Email *</Label>
                     <Input
@@ -358,14 +378,35 @@ export default function AdminSettingsPage() {
                       placeholder="Admin Name"
                     />
                   </div>
+
+                  {/* Confirmation Checkbox */}
+                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded border border-border">
+                    <Switch
+                      id="confirm-admin"
+                      checked={confirmAdminAdd}
+                      onCheckedChange={setConfirmAdminAdd}
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="confirm-admin" className="cursor-pointer font-semibold text-sm">
+                        I confirm this person should have full admin access
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        This user will be able to manage all aspects of the platform
+                      </p>
+                    </div>
+                  </div>
                 </div>
+                
                 <DialogFooter>
-                  <Button variant="outline" onClick={() => setAddDialogOpen(false)}>
+                  <Button variant="outline" onClick={() => {
+                    setAddDialogOpen(false);
+                    setConfirmAdminAdd(false);
+                  }}>
                     Cancel
                   </Button>
                   <Button
                     onClick={handleAddAdmin}
-                    disabled={addingAdmin}
+                    disabled={addingAdmin || !confirmAdminAdd}
                     className="bg-primary hover:bg-primary/90"
                   >
                     {addingAdmin ? "Adding..." : "Add Admin"}
