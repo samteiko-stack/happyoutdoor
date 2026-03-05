@@ -38,7 +38,8 @@ export async function POST(req: NextRequest) {
       },
     });
     return NextResponse.json(template, { status: 201 });
-  } catch {
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+  } catch (error: any) {
+    console.error("Template creation error:", error);
+    return NextResponse.json({ error: error.message || "Something went wrong" }, { status: 500 });
   }
 }
