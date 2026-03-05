@@ -85,10 +85,13 @@ export default function AdminTemplatesPage() {
         setDialogOpen(false);
         fetchTemplates();
       } else {
-        toast.error("Failed to save");
+        const error = await res.json();
+        console.error("Save error:", error);
+        toast.error(error.error || "Failed to save");
       }
-    } catch {
-      toast.error("Something went wrong");
+    } catch (error: any) {
+      console.error("Save exception:", error);
+      toast.error(error.message || "Something went wrong");
     }
     setLoading(false);
   }
