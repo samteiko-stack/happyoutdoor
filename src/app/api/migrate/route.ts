@@ -56,6 +56,7 @@ export async function GET() {
         "id" TEXT PRIMARY KEY,
         "name" TEXT NOT NULL,
         "description" TEXT,
+        "thumbnailUrl" TEXT,
         "balconyWidthCm" INTEGER NOT NULL,
         "balconyHeightCm" INTEGER NOT NULL,
         "layoutData" TEXT NOT NULL,
@@ -65,6 +66,12 @@ export async function GET() {
       )
     `);
     results.push("Template table created");
+
+    // Add thumbnailUrl column if it doesn't exist
+    await prisma.$executeRawUnsafe(`
+      ALTER TABLE "Template" ADD COLUMN IF NOT EXISTS "thumbnailUrl" TEXT
+    `);
+    results.push("Template thumbnailUrl column added");
 
     await prisma.$executeRawUnsafe(`
       CREATE TABLE IF NOT EXISTS "Design" (
