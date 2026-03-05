@@ -83,14 +83,15 @@ export function DesignerContent() {
   useEffect(() => {
     const templateId = searchParams.get("template");
     if (templateId && !searchParams.get("id")) {
-      fetch(`/api/templates`)
+      fetch(`/api/templates/${templateId}`)
         .then((res) => res.json())
-        .then((templates) => {
-          const template = templates.find((t: { id: string }) => t.id === templateId);
-          if (template) {
+        .then((template) => {
+          if (template && template.id) {
+            console.log("Loading template:", template.id, template.name);
             setDesignName(`${template.name} - My Design`);
             setBalconySize(template.balconyWidthCm, template.balconyHeightCm);
             const layoutItems = JSON.parse(template.layoutData || "[]");
+            console.log("Template items:", layoutItems.length);
             const itemsWithIds = layoutItems.map((item: Record<string, unknown>) => ({
               ...item,
               id: crypto.randomUUID(),
@@ -98,7 +99,9 @@ export function DesignerContent() {
             setItems(itemsWithIds);
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          console.error("Failed to load template:", err);
+        });
     }
   }, [searchParams, setDesignName, setBalconySize, setItems]);
 
