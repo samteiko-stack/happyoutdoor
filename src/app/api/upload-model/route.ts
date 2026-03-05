@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { writeFile } from "fs/promises";
-import { join } from "path";
+import { put } from "@vercel/blob";
 
 export async function POST(req: NextRequest) {
   try {
@@ -43,18 +42,14 @@ export async function POST(req: NextRequest) {
     // Generate unique filename
     const timestamp = Date.now();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, "_");
-    const filename = `${timestamp}-${sanitizedName}`;
+    const filename = `models/${timestamp}-${sanitizedName}`;
 
-    // Convert file to buffer and save
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    // Upload to Vercel Blob
+    const blob = await put(filename, file, {
+      access: "public",
+    });
 
-    const path = join(process.cwd(), "public", "models", filename);
-    await writeFile(path, buffer);
-
-    const url = `/models/${filename}`;
-
-    return NextResponse.json({ url });
+    return NextResponse.json({ url: blob.url });
   } catch (error) {
     console.error("Upload model error:", error);
     return NextResponse.json(
