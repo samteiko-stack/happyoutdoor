@@ -64,18 +64,24 @@ export function DesignerContent() {
   useEffect(() => {
     const id = searchParams.get("id");
     if (id) {
+      console.log("🔵 Loading design with ID:", id);
       fetch(`/api/designs/${id}`)
         .then((res) => res.json())
         .then((design) => {
           if (design.id) {
+            console.log("✅ Design loaded:", design.id, design.name, "Items:", JSON.parse(design.layoutData || "[]").length);
             setDesignId(design.id);
             setDesignName(design.name);
             setBalconySize(design.balconyWidthCm, design.balconyHeightCm);
             const layoutItems = JSON.parse(design.layoutData || "[]");
             setItems(layoutItems);
+          } else {
+            console.error("❌ Design response missing ID:", design);
           }
         })
-        .catch(() => {});
+        .catch((err) => {
+          console.error("❌ Failed to load design:", err);
+        });
     }
   }, [searchParams, setDesignId, setDesignName, setBalconySize, setItems]);
 
@@ -83,24 +89,26 @@ export function DesignerContent() {
   useEffect(() => {
     const templateId = searchParams.get("template");
     if (templateId && !searchParams.get("id")) {
+      console.log("🟢 Loading template with ID:", templateId);
       fetch(`/api/templates/${templateId}`)
         .then((res) => res.json())
         .then((template) => {
           if (template && template.id) {
-            console.log("Loading template:", template.id, template.name);
+            console.log("✅ Template loaded:", template.id, template.name, "Items:", JSON.parse(template.layoutData || "[]").length);
             setDesignName(`${template.name} - My Design`);
             setBalconySize(template.balconyWidthCm, template.balconyHeightCm);
             const layoutItems = JSON.parse(template.layoutData || "[]");
-            console.log("Template items:", layoutItems.length);
             const itemsWithIds = layoutItems.map((item: Record<string, unknown>) => ({
               ...item,
               id: crypto.randomUUID(),
             }));
             setItems(itemsWithIds);
+          } else {
+            console.error("❌ Template response missing ID:", template);
           }
         })
         .catch((err) => {
-          console.error("Failed to load template:", err);
+          console.error("❌ Failed to load template:", err);
         });
     }
   }, [searchParams, setDesignName, setBalconySize, setItems]);
@@ -121,6 +129,7 @@ export function DesignerContent() {
       
       if (templateId && isAdmin && !designId) {
         // Update the template
+        console.log("💾 Saving template:", templateId, "Items:", items.length);
         const res = await fetch(`/api/admin/templates/${templateId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -131,24 +140,32 @@ export function DesignerContent() {
           }),
         });
         if (res.ok) {
+          console.log("✅ Template saved successfully");
           toast.success("Template saved!");
         } else {
+          const error = await res.json();
+          console.error("❌ Template save failed:", error);
           toast.error("Failed to save template");
         }
       } else if (designId) {
         // Update existing design
+        console.log("💾 Updating design:", designId, "Items:", items.length);
         const res = await fetch(`/api/designs/${designId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData }),
         });
         if (res.ok) {
+          console.log("✅ Design updated successfully");
           toast.success("Design saved!");
         } else {
+          const error = await res.json();
+          console.error("❌ Design update failed:", error);
           toast.error("Failed to save design");
         }
       } else {
         // Create new design
+        console.log("💾 Creating new design:", designName, "Items:", items.length);
         const res = await fetch("/api/designs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -156,14 +173,18 @@ export function DesignerContent() {
         });
         if (res.ok) {
           const design = await res.json();
+          console.log("✅ Design created:", design.id);
           setDesignId(design.id);
           window.history.replaceState(null, "", `/designer?id=${design.id}`);
           toast.success("Design created!");
         } else {
+          const error = await res.json();
+          console.error("❌ Design creation failed:", error);
           toast.error("Failed to create design");
         }
       }
-    } catch {
+    } catch (err) {
+      console.error("❌ Save exception:", err);
       toast.error("Something went wrong");
     }
     setSaving(false);
