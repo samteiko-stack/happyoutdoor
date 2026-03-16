@@ -114,7 +114,29 @@ export function DesignerContent() {
     setSaving(true);
     try {
       const layoutData = JSON.stringify(items);
-      if (designId) {
+      
+      // Check if we're editing a template (admin only)
+      const templateId = searchParams.get("template");
+      const isAdmin = session.user?.role?.toLowerCase() === "admin";
+      
+      if (templateId && isAdmin && !designId) {
+        // Update the template
+        const res = await fetch(`/api/admin/templates/${templateId}`, {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ 
+            balconyWidthCm, 
+            balconyHeightCm, 
+            layoutData 
+          }),
+        });
+        if (res.ok) {
+          toast.success("Template saved!");
+        } else {
+          toast.error("Failed to save template");
+        }
+      } else if (designId) {
+        // Update existing design
         const res = await fetch(`/api/designs/${designId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -126,6 +148,7 @@ export function DesignerContent() {
           toast.error("Failed to save design");
         }
       } else {
+        // Create new design
         const res = await fetch("/api/designs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -207,7 +230,9 @@ export function DesignerContent() {
             ) : (
               <>
                 <FloppyDisk width={16} height={16} />
-                Save Design
+                {searchParams.get("template") && session?.user?.role?.toLowerCase() === "admin" && !designId 
+                  ? "Save Template" 
+                  : "Save Design"}
               </>
             )}
           </Button>
