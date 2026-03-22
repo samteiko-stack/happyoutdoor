@@ -10,8 +10,12 @@ const dmSans = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Happy Balcony - Design Your Dream Outdoor Space",
-  description: "Design beautiful balcony layouts with curated products. Place, arrange, and create your perfect outdoor retreat.",
+  title: "Happy Outdoors",
+  description: "Turning small outdoor spaces into joyful places",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

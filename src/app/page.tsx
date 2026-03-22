@@ -1,4 +1,14 @@
+import type { Metadata } from "next";
 import Image from "next/image";
+
+export const metadata: Metadata = {
+  title: "Happy Outdoors — Coming Soon",
+  description: "Turning small outdoor spaces into joyful places",
+  robots: {
+    index: true,
+    follow: true,
+  },
+};
 
 export default function ComingSoonPage() {
   return (
