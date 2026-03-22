@@ -30,9 +30,7 @@ export default function ComingSoonPage() {
       <div className="relative z-10 min-h-screen flex flex-col justify-between px-10 md:px-20 py-12">
         {/* Logo */}
         <div>
-          <span className="text-white/90 text-lg font-semibold tracking-wide">
-            Happy Outdoors
-          </span>
+          <Image src="/logo.svg" alt="Happy Outdoors" width={160} height={60} priority />
         </div>
 
         {/* Main text */}
@@ -49,7 +47,7 @@ export default function ComingSoonPage() {
         {/* Footer */}
         <div>
           <p className="text-white/40 text-sm">
-            © {new Date().getFullYear()} Happy Outdoors
+            © {new Date().getFullYear()} Happy Outdoors. All rights reserved.
           </p>
         </div>
       </div>
