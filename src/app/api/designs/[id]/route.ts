@@ -16,7 +16,7 @@ export async function GET(
 
     const design = await prisma.design.findUnique({
       where: { id },
-      include: { template: true, payments: true },
+      include: { template: true },
     });
 
     if (!design) {
