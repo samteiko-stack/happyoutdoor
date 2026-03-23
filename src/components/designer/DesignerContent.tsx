@@ -47,6 +47,15 @@ export function DesignerContent() {
     viewMode,
   } = useDesignerStore();
 
+  // Reset store state on every mount so stale data never bleeds between navigations
+  useEffect(() => {
+    setItems([]);
+    setDesignId(null);
+    setDesignName("My Balcony Design");
+    setBalconySize(300, 200);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Load products and categories
   useEffect(() => {
     async function loadData() {
