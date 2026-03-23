@@ -83,10 +83,13 @@ export function DesignerContent() {
             setItems(JSON.parse(design.layoutData || "[]"));
           } else {
             console.error("Failed to load design:", design);
-            toast.error("Could not load design");
+            toast.error(`Could not load design: ${design.error || "unknown error"}`);
           }
         })
-        .catch(() => toast.error("Could not load design"));
+        .catch((err) => {
+          console.error("Design fetch error:", err);
+          toast.error("Could not load design");
+        });
     } else if (templateId) {
       // Load template
       fetch(`/api/templates/${templateId}`)

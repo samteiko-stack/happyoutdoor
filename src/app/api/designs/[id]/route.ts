@@ -20,15 +20,19 @@ export async function GET(
     });
 
     if (!design) {
+      console.error(`Design not found: ${id}`);
       return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
-    if (design.userId !== session.user.id && (session.user as { role: string }).role !== "ADMIN") {
+    const userRole = (session.user as { role: string }).role;
+    if (design.userId !== session.user.id && userRole !== "ADMIN") {
+      console.error(`Unauthorized: design.userId=${design.userId}, session.user.id=${session.user.id}`);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     return NextResponse.json(design);
-  } catch {
+  } catch (error) {
+    console.error("GET design error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
