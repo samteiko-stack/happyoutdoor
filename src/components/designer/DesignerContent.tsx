@@ -47,15 +47,6 @@ export function DesignerContent() {
     viewMode,
   } = useDesignerStore();
 
-  // Reset store state on every mount so stale data never bleeds between navigations
-  useEffect(() => {
-    setItems([]);
-    setDesignId(null);
-    setDesignName("My Balcony Design");
-    setBalconySize(300, 200);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Load products and categories
   useEffect(() => {
     async function loadData() {
@@ -69,58 +60,54 @@ export function DesignerContent() {
     loadData();
   }, [setProducts, setCategories]);
 
-  // Load existing design if ID is in URL
+  // Single effect to reset then load design or template — prevents race conditions
   useEffect(() => {
+    // Always reset first
+    setItems([]);
+    setDesignId(null);
+    setDesignName("My Balcony Design");
+    setBalconySize(300, 200);
+
     const id = searchParams.get("id");
+    const templateId = searchParams.get("template");
+
     if (id) {
-      console.log("🔵 Loading design with ID:", id);
+      // Load existing design
       fetch(`/api/designs/${id}`)
         .then((res) => res.json())
         .then((design) => {
           if (design.id) {
-            console.log("✅ Design loaded:", design.id, design.name, "Items:", JSON.parse(design.layoutData || "[]").length);
             setDesignId(design.id);
             setDesignName(design.name);
             setBalconySize(design.balconyWidthCm, design.balconyHeightCm);
-            const layoutItems = JSON.parse(design.layoutData || "[]");
-            setItems(layoutItems);
+            setItems(JSON.parse(design.layoutData || "[]"));
           } else {
-            console.error("❌ Design response missing ID:", design);
+            console.error("Failed to load design:", design);
+            toast.error("Could not load design");
           }
         })
-        .catch((err) => {
-          console.error("❌ Failed to load design:", err);
-        });
-    }
-  }, [searchParams, setDesignId, setDesignName, setBalconySize, setItems]);
-
-  // Load template if template param is in URL
-  useEffect(() => {
-    const templateId = searchParams.get("template");
-    if (templateId && !searchParams.get("id")) {
-      console.log("🟢 Loading template with ID:", templateId);
+        .catch(() => toast.error("Could not load design"));
+    } else if (templateId) {
+      // Load template
       fetch(`/api/templates/${templateId}`)
         .then((res) => res.json())
         .then((template) => {
           if (template && template.id) {
-            console.log("✅ Template loaded:", template.id, template.name, "Items:", JSON.parse(template.layoutData || "[]").length);
             setDesignName(`${template.name} - My Design`);
             setBalconySize(template.balconyWidthCm, template.balconyHeightCm);
             const layoutItems = JSON.parse(template.layoutData || "[]");
-            const itemsWithIds = layoutItems.map((item: Record<string, unknown>) => ({
+            setItems(layoutItems.map((item: Record<string, unknown>) => ({
               ...item,
               id: crypto.randomUUID(),
-            }));
-            setItems(itemsWithIds);
+            })));
           } else {
-            console.error("❌ Template response missing ID:", template);
+            console.error("Failed to load template:", template);
           }
         })
-        .catch((err) => {
-          console.error("❌ Failed to load template:", err);
-        });
+        .catch(() => console.error("Failed to load template"));
     }
-  }, [searchParams, setDesignName, setBalconySize, setItems]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
 
   async function handleSave() {
     if (!session) {
