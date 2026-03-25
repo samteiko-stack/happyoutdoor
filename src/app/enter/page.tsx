@@ -13,7 +13,7 @@ export default async function HomePage() {
   // Redirect logged-in users to appropriate dashboard
   if (session?.user) {
     const userRole = (session.user as any).role;
-    if (userRole === "ADMIN") {
+    if (userRole?.toUpperCase() === "ADMIN") {
       redirect("/admin");
     } else {
       redirect("/dashboard");

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default async function ComingSoonPage() {
   const session = await auth();
   if (session?.user) {
-    const role = (session.user as { role?: string }).role;
+    const role = (session.user as { role?: string }).role?.toUpperCase();
     if (role === "ADMIN") redirect("/admin");
     else redirect("/dashboard");
   }

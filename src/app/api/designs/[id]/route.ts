@@ -24,7 +24,7 @@ export async function GET(
       return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
-    const userRole = (session.user as { role: string }).role;
+    const userRole = (session.user as { role: string }).role?.toUpperCase();
     if (design.userId !== session.user.id && userRole !== "ADMIN") {
       console.error(`Unauthorized: design.userId=${design.userId}, session.user.id=${session.user.id}`);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
