@@ -3,9 +3,10 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
-import { ViewGrid, Package, Folder, MultiplePages, Group, Settings } from "iconoir-react";
+import { ViewGrid, Package, Folder, MultiplePages, Group, Settings, LogOut } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Session } from "next-auth";
 
 const navItems = [
@@ -57,19 +58,38 @@ export function AdminShell({ session, children }: { session: Session | null; chi
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
         <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
-          <h1 className="font-semibold text-foreground text-xl">Happy Balcony Admin</h1>
-          <div className="flex items-center gap-4">
+          <h1 className="font-semibold text-foreground text-xl">Admin Panel</h1>
+          <div className="flex items-center gap-3">
             {session?.user && (
-              <span className="text-primary text-sm">
-                {session.user.name || session.user.email}
-              </span>
+              <div className="flex items-center gap-3">
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback className="bg-primary/10 text-primary text-xs font-semibold">
+                    {(session.user.name || session.user.email || "A")
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col leading-tight">
+                  <span className="text-sm font-medium text-foreground">
+                    {session.user.name || "Admin"}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {session.user.email}
+                  </span>
+                </div>
+              </div>
             )}
+            <Separator orientation="vertical" className="h-8" />
             <Button
-              variant="outline"
+              variant="ghost"
               size="sm"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="border-border text-primary hover:bg-secondary/10 hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground gap-2"
             >
+              <LogOut width={16} height={16} />
               Sign out
             </Button>
           </div>
