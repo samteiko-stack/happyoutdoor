@@ -65,7 +65,13 @@ export default function AdminProductsPage() {
 
   const fetchProducts = useCallback(async () => {
     const res = await fetch("/api/admin/products");
-    if (res.ok) setProducts(await res.json());
+    if (res.ok) {
+      setProducts(await res.json());
+    } else {
+      const err = await res.json().catch(() => ({}));
+      console.error("Failed to fetch products:", res.status, err);
+      toast.error(`Failed to load products: ${err.error || res.status}`);
+    }
   }, []);
 
   const fetchCategories = useCallback(async () => {
@@ -73,6 +79,9 @@ export default function AdminProductsPage() {
     if (res.ok) {
       const data = await res.json();
       setCategories(data);
+    } else {
+      const err = await res.json().catch(() => ({}));
+      console.error("Failed to fetch categories:", res.status, err);
     }
   }, []);
 

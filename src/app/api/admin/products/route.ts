@@ -15,9 +15,10 @@ export async function GET(req: NextRequest) {
     });
 
     return NextResponse.json(products);
-  } catch {
+  } catch (error) {
+    console.error("GET /api/admin/products error:", error);
     return NextResponse.json(
-      { error: "Something went wrong" },
+      { error: String(error) },
       { status: 500 }
     );
   }
