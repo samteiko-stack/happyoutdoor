@@ -23,8 +23,8 @@ export default function ComingSoonPage() {
         quality={90}
       />
 
-      {/* Gradient overlay — lighter on the right, heavier on the left */}
-      <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/40 to-black/10" />
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-black/30 to-black/5" />
 
       {/* Content */}
       <div className="relative z-10 min-h-screen flex flex-col justify-between px-10 md:px-20 py-12">
