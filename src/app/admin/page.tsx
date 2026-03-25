@@ -16,15 +16,14 @@ import {
 } from "@/components/ui/table";
 
 async function getStats() {
-  const [usersCount, productsCount, designsCount, paymentsCount] =
+  const [usersCount, productsCount, designsCount] =
     await Promise.all([
       prisma.user.count(),
       prisma.product.count(),
       prisma.design.count(),
-      prisma.payment.count(),
     ]);
 
-  return { usersCount, productsCount, designsCount, paymentsCount };
+  return { usersCount, productsCount, designsCount, paymentsCount: 0 };
 }
 
 async function getRecentDesigns() {
