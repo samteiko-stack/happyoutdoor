@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import Image from "next/image";
+import { redirect } from "next/navigation";
+import { auth } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Happy Outdoors — Coming Soon",
@@ -10,7 +12,13 @@ export const metadata: Metadata = {
   },
 };
 
-export default function ComingSoonPage() {
+export default async function ComingSoonPage() {
+  const session = await auth();
+  if (session?.user) {
+    const role = (session.user as { role?: string }).role;
+    if (role === "ADMIN") redirect("/admin");
+    else redirect("/dashboard");
+  }
   return (
     <div className="relative min-h-screen w-full overflow-hidden">
       {/* Background image */}
