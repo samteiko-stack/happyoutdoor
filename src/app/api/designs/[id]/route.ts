@@ -66,6 +66,7 @@ export async function PUT(
             ? body.layoutData
             : JSON.stringify(body.layoutData)
           : existing.layoutData,
+        ...(body.thumbnailUrl && { thumbnailUrl: body.thumbnailUrl }),
       },
     });
 

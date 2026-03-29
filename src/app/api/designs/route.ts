@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { name, balconyWidthCm, balconyHeightCm, layoutData, templateId } = body;
+    const { name, balconyWidthCm, balconyHeightCm, layoutData, templateId, thumbnailUrl } = body;
 
     console.log("Creating design:", { userId: session.user.id, name, balconyWidthCm, balconyHeightCm });
 
@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
         balconyHeightCm: balconyHeightCm || 200,
         layoutData: typeof layoutData === "string" ? layoutData : JSON.stringify(layoutData || []),
         templateId: templateId || null,
+        thumbnailUrl: thumbnailUrl || null,
       },
     });
 

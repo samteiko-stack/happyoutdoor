@@ -106,6 +106,13 @@ export async function GET() {
       )
     `);
     results.push("Payment table created");
+
+    // Add thumbnailUrl columns if they don't exist
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Design" ADD COLUMN IF NOT EXISTS "thumbnailUrl" TEXT`);
+    results.push("Design thumbnailUrl column added");
+
+    await prisma.$executeRawUnsafe(`ALTER TABLE "Template" ADD COLUMN IF NOT EXISTS "thumbnailUrl" TEXT`);
+    results.push("Template thumbnailUrl column added");
     
     return NextResponse.json({
       success: true,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
@@ -24,6 +25,7 @@ export default async function HomePage() {
     id: string;
     name: string;
     description: string | null;
+    thumbnailUrl: string | null;
     balconyWidthCm: number;
     balconyHeightCm: number;
     layoutData: string;
@@ -118,18 +120,22 @@ export default async function HomePage() {
               {templates.map((template) => {
                 const itemCount = (() => { try { return JSON.parse(template.layoutData).length; } catch { return 0; } })();
                 return (
-                  <Card key={template.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
+                  <Card key={template.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                    <div className="aspect-video relative bg-secondary/20">
+                      {template.thumbnailUrl ? (
+                        <Image src={template.thumbnailUrl} alt={template.name} fill className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-sm text-muted-foreground">
+                          {template.balconyWidthCm} × {template.balconyHeightCm} cm
+                          {itemCount > 0 && ` · ${itemCount} items`}
+                        </div>
+                      )}
+                    </div>
+                    <CardHeader className="pb-2">
                       <CardTitle>{template.name}</CardTitle>
-                      <CardDescription>{template.description}</CardDescription>
+                      {template.description && <CardDescription>{template.description}</CardDescription>}
                     </CardHeader>
                     <CardContent>
-                      <div className="bg-secondary/20 rounded p-4 mb-4 text-center">
-                        <p className="text-sm text-primary">
-                          {template.balconyWidthCm} x {template.balconyHeightCm} cm
-                          {itemCount > 0 && ` · ${itemCount} products`}
-                        </p>
-                      </div>
                       <Link href={session ? `/designer?template=${template.id}` : "/register"}>
                         <Button className="w-full bg-primary hover:bg-primary/90">
                           Use This Template

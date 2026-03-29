@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -31,6 +31,30 @@ export function DesignerContent() {
   const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
   const [editingName, setEditingName] = useState(false);
+  const snapshotFnRef = useRef<(() => string) | null>(null);
+
+  const handleSnapshotReady = useCallback((fn: () => string) => {
+    snapshotFnRef.current = fn;
+  }, []);
+
+  async function captureAndUploadSnapshot(): Promise<string | null> {
+    if (!snapshotFnRef.current) return null;
+    try {
+      const dataUrl = snapshotFnRef.current();
+      const blob = await fetch(dataUrl).then((r) => r.blob());
+      const file = new File([blob], `snapshot-${Date.now()}.jpg`, { type: "image/jpeg" });
+      const formData = new FormData();
+      formData.append("file", file);
+      const res = await fetch("/api/upload-snapshot", { method: "POST", body: formData });
+      if (res.ok) {
+        const { url } = await res.json();
+        return url;
+      }
+    } catch (e) {
+      console.error("Snapshot upload failed:", e);
+    }
+    return null;
+  }
 
   const {
     setProducts,
@@ -121,69 +145,44 @@ export function DesignerContent() {
     setSaving(true);
     try {
       const layoutData = JSON.stringify(items);
-      
-      // Check if we're editing a template (admin only)
+      const thumbnailUrl = await captureAndUploadSnapshot();
+
       const templateId = searchParams.get("template");
       const isAdmin = session.user?.role?.toLowerCase() === "admin";
-      
+
       if (templateId && isAdmin && !designId) {
-        // Update the template
-        console.log("💾 Saving template:", templateId, "Items:", items.length);
         const res = await fetch(`/api/admin/templates/${templateId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            balconyWidthCm, 
-            balconyHeightCm, 
-            layoutData 
-          }),
+          body: JSON.stringify({ balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
         });
-        if (res.ok) {
-          console.log("✅ Template saved successfully");
-          toast.success("Template saved!");
-        } else {
-          const error = await res.json();
-          console.error("❌ Template save failed:", error);
-          toast.error("Failed to save template");
-        }
+        if (res.ok) toast.success("Template saved!");
+        else toast.error("Failed to save template");
       } else if (designId) {
-        // Update existing design
-        console.log("💾 Updating design:", designId, "Items:", items.length);
         const res = await fetch(`/api/designs/${designId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData }),
+          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
         });
-        if (res.ok) {
-          console.log("✅ Design updated successfully");
-          toast.success("Design saved!");
-        } else {
-          const error = await res.json();
-          console.error("❌ Design update failed:", error);
-          toast.error("Failed to save design");
-        }
+        if (res.ok) toast.success("Design saved!");
+        else toast.error("Failed to save design");
       } else {
-        // Create new design
-        console.log("💾 Creating new design:", designName, "Items:", items.length);
         const res = await fetch("/api/designs", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData }),
+          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
         });
         if (res.ok) {
           const design = await res.json();
-          console.log("✅ Design created:", design.id);
           setDesignId(design.id);
           window.history.replaceState(null, "", `/designer?id=${design.id}`);
           toast.success("Design created!");
         } else {
-          const error = await res.json();
-          console.error("❌ Design creation failed:", error);
           toast.error("Failed to create design");
         }
       }
     } catch (err) {
-      console.error("❌ Save exception:", err);
+      console.error("Save error:", err);
       toast.error("Something went wrong");
     }
     setSaving(false);
@@ -266,7 +265,7 @@ export function DesignerContent() {
       {/* Main content: Canvas/Scene + Catalog */}
       <div className="flex-1 flex overflow-hidden">
         <div className="flex-1">
-          {viewMode === "topView" ? <Canvas /> : <IsometricScene />}
+          {viewMode === "topView" ? <Canvas /> : <IsometricScene onSnapshotReady={handleSnapshotReady} />}
         </div>
         <div className="w-80 flex-shrink-0">
           <ProductCatalog />

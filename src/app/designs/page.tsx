@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,6 +17,7 @@ interface Design {
   balconyHeightCm: number;
   isPaid: boolean;
   layoutData: string;
+  thumbnailUrl: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -131,11 +133,20 @@ export default function DesignsPage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="flex-1 pb-4">
-                  <div className="bg-accent/5 rounded-lg p-6 mb-4 text-center border border-accent/20">
-                    <p className="text-4xl font-bold text-primary mb-1">
-                      {getItemCount(design.layoutData)}
-                    </p>
-                    <p className="text-sm text-muted-foreground">products placed</p>
+                  <div className="rounded-lg mb-4 overflow-hidden border border-accent/20 bg-accent/5 aspect-video relative">
+                    {design.thumbnailUrl ? (
+                      <Image
+                        src={design.thumbnailUrl}
+                        alt={design.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-1">
+                        <p className="text-4xl font-bold text-primary">{getItemCount(design.layoutData)}</p>
+                        <p className="text-sm text-muted-foreground">products placed</p>
+                      </div>
+                    )}
                   </div>
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <p className="flex items-center gap-2">

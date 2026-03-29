@@ -945,12 +945,23 @@ function Scene() {
   );
 }
 
-export function IsometricScene() {
+function SnapshotCapture({ onReady }: { onReady: (fn: () => string) => void }) {
+  const { gl } = useThree();
+  useEffect(() => {
+    onReady(() => {
+      gl.render(gl.getRenderTarget() as any, null as any);
+      return gl.domElement.toDataURL("image/jpeg", 0.8);
+    });
+  }, [gl, onReady]);
+  return null;
+}
+
+export function IsometricScene({ onSnapshotReady }: { onSnapshotReady?: (fn: () => string) => void }) {
   return (
     <div className="w-full h-full">
       <Canvas
         shadows
-        gl={{ antialias: true, alpha: false }}
+        gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
         camera={{ 
           position: [6, 5, 6],
           fov: 50,
@@ -958,6 +969,7 @@ export function IsometricScene() {
         onPointerMissed={() => useDesignerStore.getState().setSelectedItemId(null)}
       >
         <Scene />
+        {onSnapshotReady && <SnapshotCapture onReady={onSnapshotReady} />}
       </Canvas>
     </div>
   );

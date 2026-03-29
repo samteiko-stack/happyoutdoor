@@ -70,6 +70,7 @@ model Design {
   balconyWidthCm  Int       @default(300)
   balconyHeightCm Int       @default(200)
   layoutData      String    @default("[]")
+  thumbnailUrl    String?
   isPaid          Boolean   @default(false)
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt

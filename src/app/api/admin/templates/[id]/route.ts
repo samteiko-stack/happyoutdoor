@@ -18,12 +18,13 @@ export async function PUT(
     const template = await prisma.template.update({
       where: { id },
       data: {
-        name: body.name,
-        description: body.description,
-        balconyWidthCm: body.balconyWidthCm,
-        balconyHeightCm: body.balconyHeightCm,
-        layoutData: body.layoutData,
-        isPublished: body.isPublished,
+        ...(body.name !== undefined && { name: body.name }),
+        ...(body.description !== undefined && { description: body.description }),
+        ...(body.balconyWidthCm !== undefined && { balconyWidthCm: body.balconyWidthCm }),
+        ...(body.balconyHeightCm !== undefined && { balconyHeightCm: body.balconyHeightCm }),
+        ...(body.layoutData !== undefined && { layoutData: body.layoutData }),
+        ...(body.isPublished !== undefined && { isPublished: body.isPublished }),
+        ...(body.thumbnailUrl && { thumbnailUrl: body.thumbnailUrl }),
       },
     });
 

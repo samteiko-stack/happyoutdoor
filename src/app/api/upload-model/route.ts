@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     }
     
     // Check role case-insensitively
-    const userRole = session.user.role?.toUpperCase();
+is     const userRole = session.user.role?.toUpperCase();
     if (userRole !== "ADMIN") {
       return NextResponse.json({ 
         error: `Admin access required. Your role: ${session.user.role}` 
