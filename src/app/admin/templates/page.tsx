@@ -171,8 +171,8 @@ export default function AdminTemplatesPage() {
                       onCheckedChange={() => handleTogglePublish(template)}
                     />
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
+                  <TableCell className="text-right">
+                    <div className="flex items-center justify-end gap-2">
                       <Link href={`/designer?template=${template.id}`}>
                         <Button variant="outline" size="sm" className="gap-1">
                           <DesignPencil width={14} height={14} />
