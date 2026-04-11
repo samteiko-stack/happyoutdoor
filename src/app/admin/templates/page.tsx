@@ -171,19 +171,21 @@ export default function AdminTemplatesPage() {
                       onCheckedChange={() => handleTogglePublish(template)}
                     />
                   </TableCell>
-                  <TableCell className="text-right space-x-2">
-                    <Link href={`/designer?template=${template.id}`}>
-                      <Button variant="outline" size="sm" className="gap-1">
-                        <DesignPencil width={14} height={14} />
-                        Open
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Link href={`/designer?template=${template.id}`}>
+                        <Button variant="outline" size="sm" className="gap-1">
+                          <DesignPencil width={14} height={14} />
+                          Open
+                        </Button>
+                      </Link>
+                      <Button variant="outline" size="sm" onClick={() => openEdit(template)}>
+                        Edit
                       </Button>
-                    </Link>
-                    <Button variant="outline" size="sm" onClick={() => openEdit(template)}>
-                      Edit
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDelete(template.id)}>
-                      Delete
-                    </Button>
+                      <Button variant="destructive" size="sm" onClick={() => handleDelete(template.id)}>
+                        Delete
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
