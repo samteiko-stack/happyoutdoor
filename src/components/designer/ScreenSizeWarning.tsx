@@ -38,7 +38,7 @@ export function ScreenSizeWarning() {
             Screen too small
           </h2>
           <p className="text-muted-foreground">
-            The Happy Balcony designer works best on larger screens. Please use a desktop or laptop computer for the best experience.
+            The Happy Outdoor designer works best on larger screens. Please use a desktop or laptop computer for the best experience.
           </p>
         </div>
 

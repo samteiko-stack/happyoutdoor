@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { UserMenu } from "@/components/UserMenu";
+import { Logo } from "@/components/Logo";
 
 interface CanvasItem {
   id: string;
@@ -89,7 +90,7 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
       <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/" className="text-primary font-bold text-xl">Happy Balcony</Link>
+            <Link href="/"><Logo variant="color" width={100} height={38} /></Link>
             <span className="text-gray-300">|</span>
             <Link href="/designs" className="text-sm text-muted-foreground hover:text-gray-900">My Designs</Link>
             <span className="text-gray-300">/</span>
