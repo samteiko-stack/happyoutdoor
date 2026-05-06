@@ -40,7 +40,7 @@ export function UserMenu() {
   const initials = user.name
     ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
     : user.email?.charAt(0).toUpperCase() || "U";
-  const isAdmin = (user as { role?: string }).role === "ADMIN";
+  const isAdmin = (user as { role?: string }).role?.toUpperCase() === "ADMIN";
 
   // Generate a cute avatar based on user's email for consistency
   const avatarSeed = user.email || user.name || "default";
@@ -99,7 +99,7 @@ export function UserMenu() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut({ callbackUrl: "/" })}
+          onClick={() => signOut({ callbackUrl: "/login" })}
           className="cursor-pointer text-red-600 focus:text-red-600"
         >
           <LogOut width={16} height={16} className="mr-2" />
