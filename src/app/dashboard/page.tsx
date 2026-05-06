@@ -4,7 +4,6 @@ import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { UserMenu } from "@/components/UserMenu";
 import { Plus, DesignPencil } from "iconoir-react";
-import { Logo } from "@/components/Logo";
 
 export default async function DashboardPage() {
   const session = await auth();
@@ -42,8 +41,8 @@ export default async function DashboardPage() {
       {/* Header */}
       <header className="bg-white border-b shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link href="/">
-            <Logo variant="color" width={100} height={38} />
+          <Link href="/" className="text-primary font-bold text-xl">
+            Happy Outdoor
           </Link>
           <UserMenu />
         </div>

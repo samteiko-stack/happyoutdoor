@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Logo } from "@/components/Logo";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -77,9 +76,7 @@ export default function RegisterPage() {
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <Logo variant="color" width={110} height={42} />
-          </div>
+          <p className="text-xl font-bold text-primary mb-2">Happy Outdoor</p>
           <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
           <CardDescription>Start designing your dream balcony</CardDescription>
         </CardHeader>

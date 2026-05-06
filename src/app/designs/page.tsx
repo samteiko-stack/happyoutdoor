@@ -9,7 +9,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { UserMenu } from "@/components/UserMenu";
 import { Plus, DesignPencil, EditPencil, Link as LinkIcon, Trash, Lock } from "iconoir-react";
-import { Logo } from "@/components/Logo";
 
 interface Design {
   id: string;
@@ -72,8 +71,8 @@ export default function DesignsPage() {
       <nav className="bg-card border-b sticky top-0 z-50 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <Link href="/">
-              <Logo variant="color" width={100} height={38} />
+            <Link href="/" className="text-primary font-bold text-xl hover:text-primary/80 transition-colors">
+              Happy Outdoor
             </Link>
           </div>
           <div className="flex items-center gap-3">

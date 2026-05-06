@@ -12,7 +12,6 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { UserMenu } from "@/components/UserMenu";
 import { FloppyDisk } from "iconoir-react";
-import { Logo } from "@/components/Logo";
 
 interface UserData {
   id: string;
@@ -129,8 +128,8 @@ export default function SettingsPage() {
       <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link href="/">
-              <Logo variant="color" width={100} height={38} />
+            <Link href="/" className="text-primary font-bold text-xl">
+              Happy Outdoor
             </Link>
             <span className="text-gray-300">|</span>
             <h1 className="font-semibold text-sm">Account Settings</h1>

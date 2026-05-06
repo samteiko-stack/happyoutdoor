@@ -13,7 +13,6 @@ import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import Link from "next/link";
 import { UserMenu } from "@/components/UserMenu";
-import { Logo } from "@/components/Logo";
 import { EditPencil, FloppyDisk, ViewGrid } from "iconoir-react";
 
 const Canvas = dynamic(
@@ -197,8 +196,8 @@ export function DesignerContent() {
       {/* Top bar */}
       <div className="flex items-center justify-between bg-white border-b px-4 py-2 shadow-sm">
         <div className="flex items-center gap-3">
-          <Link href="/">
-            <Logo variant="color" width={90} height={34} />
+          <Link href="/" className="text-primary font-bold text-lg hover:text-primary/80">
+            Happy Outdoor
           </Link>
           <span className="text-gray-300">|</span>
           {editingName ? (

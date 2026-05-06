@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import type { Session } from "next-auth";
-import { Logo } from "@/components/Logo";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: ViewGrid },
@@ -27,8 +26,8 @@ export function AdminShell({ session, children }: { session: Session | null; chi
       {/* Sidebar */}
       <aside className="w-64 flex flex-col border-r border-border bg-white">
         <div className="p-6">
-          <Logo variant="color" width={100} height={38} />
-          <p className="text-primary text-sm mt-1">Admin Panel</p>
+          <h2 className="font-bold text-foreground text-lg">Happy Outdoor</h2>
+          <p className="text-primary text-sm">Admin Panel</p>
         </div>
         <Separator className="bg-border" />
         <nav className="flex-1 p-4 space-y-1">

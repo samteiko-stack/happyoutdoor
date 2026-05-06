@@ -7,7 +7,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { UserMenu } from "@/components/UserMenu";
 import { HowItWorksIcons } from "@/components/HowItWorksIcons";
-import { Logo } from "@/components/Logo";
 
 export default async function HomePage() {
   const session = await auth();
@@ -52,8 +51,8 @@ export default async function HomePage() {
       {/* Nav */}
       <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
-          <Link href="/">
-            <Logo variant="color" width={100} height={38} />
+          <Link href="/" className="text-primary font-bold text-xl">
+            Happy Outdoor
           </Link>
           <UserMenu />
         </div>
@@ -169,9 +168,7 @@ export default async function HomePage() {
       {/* Footer */}
       <footer className="bg-gray-900 text-gray-400 py-12">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <div className="flex justify-center mb-3">
-            <Logo variant="white" width={100} height={38} />
-          </div>
+          <p className="font-bold text-white text-lg mb-2">Happy Outdoor</p>
           <p className="text-sm">Design beautiful outdoor spaces with curated products</p>
           <p className="text-xs mt-4">&copy; {new Date().getFullYear()} Happy Outdoor. All rights reserved.</p>
         </div>
