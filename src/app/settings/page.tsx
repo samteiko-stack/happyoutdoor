@@ -8,10 +8,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { UserMenu } from "@/components/UserMenu";
 import { FloppyDisk } from "iconoir-react";
+import { AppShell, AppNav, PageContainer, LoadingState } from "@/components/layout";
+import { StatusBadge } from "@/components/admin";
 
 interface UserData {
   id: string;
@@ -115,30 +115,18 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading settings...</p>
-      </div>
-    );
+    return <LoadingState message="Loading settings..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-primary font-bold text-xl">
-              Happy Outdoor
-            </Link>
-            <span className="text-gray-300">|</span>
-            <h1 className="font-semibold text-sm">Account Settings</h1>
-          </div>
-          <UserMenu />
-        </div>
-      </nav>
+    <AppShell surface="muted">
+      <AppNav
+        containerSize="sm"
+        blur
+        breadcrumbs={<span className="font-semibold">Account Settings</span>}
+      />
 
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+      <PageContainer size="sm" className="py-8 space-y-6">
         {/* Account overview */}
         <Card>
           <CardHeader>
@@ -157,23 +145,21 @@ export default function SettingsPage() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <Badge variant={user?.role === "ADMIN" ? "default" : "secondary"}>
-                  {user?.role === "ADMIN" ? "Admin" : "User"}
-                </Badge>
+                <StatusBadge status={user?.role?.toUpperCase() === "ADMIN" ? "admin" : "user"} />
               </div>
             </div>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="bg-gray-50 rounded p-3">
+              <div className="bg-surface-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-primary">{user?._count.designs || 0}</p>
                 <p className="text-xs text-muted-foreground">Designs</p>
               </div>
-              <div className="bg-gray-50 rounded p-3">
+              <div className="bg-surface-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-primary">{user?._count.payments || 0}</p>
                 <p className="text-xs text-muted-foreground">Purchases</p>
               </div>
-              <div className="bg-gray-50 rounded p-3">
+              <div className="bg-surface-muted rounded-lg p-3">
                 <p className="text-2xl font-bold text-primary">
                   {user?.createdAt ? new Date(user.createdAt).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : "—"}
                 </p>
@@ -212,11 +198,7 @@ export default function SettingsPage() {
                   />
                 </div>
               </div>
-              <Button
-                type="submit"
-                disabled={saving}
-                className="bg-primary hover:bg-primary/90 gap-2"
-              >
+              <Button type="submit" disabled={saving} className="gap-2">
                 {saving ? (
                   "Saving..."
                 ) : (
@@ -293,12 +275,10 @@ export default function SettingsPage() {
 
         <div className="flex justify-center">
           <Link href="/designer">
-            <Button className="bg-[#6b7f3b] hover:bg-[#5a6b32]">
-              Back to Designer
-            </Button>
+            <Button>Back to Designer</Button>
           </Link>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </AppShell>
   );
 }

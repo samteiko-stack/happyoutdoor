@@ -61,17 +61,17 @@ export default async function HomePage() {
       {/* Hero */}
       <section className="bg-gradient-to-br from-background via-secondary/30 to-secondary/20 py-24">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <h1 className="text-5xl font-extrabold tracking-tight text-gray-900 mb-6">
+          <h1 className="text-5xl font-extrabold tracking-tight text-foreground mb-6">
             Design Your Dream
             <span className="text-primary"> Balcony</span>
           </h1>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto mb-8">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-8">
             Choose from curated products, arrange them on a top-view canvas, and get
             direct links to purchase everything you need. It&apos;s that simple.
           </p>
           <div className="flex items-center justify-center gap-4">
             <Link href={session ? "/designer" : "/register"}>
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-8 py-6">
+              <Button size="lg">
                 Start Designing
               </Button>
             </Link>
@@ -81,17 +81,17 @@ export default async function HomePage() {
               </Button>
             </a>
           </div>
-          <div className="flex items-center justify-center gap-8 mt-12 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-8 mt-12 text-sm text-muted-foreground">
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-primary">{productCount}</span>
               <span>Products</span>
             </div>
-            <div className="w-px h-6 bg-gray-300" />
+            <div className="w-px h-6 bg-border" />
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-primary">{categoryCount}</span>
               <span>Categories</span>
             </div>
-            <div className="w-px h-6 bg-gray-300" />
+            <div className="w-px h-6 bg-border" />
             <div className="flex items-center gap-2">
               <span className="text-2xl font-bold text-primary">Free</span>
               <span>to Design</span>
@@ -110,10 +110,10 @@ export default async function HomePage() {
 
       {/* Templates */}
       {templates.length > 0 && (
-        <section className="py-20 bg-gray-50">
+        <section className="py-20 bg-surface-muted">
           <div className="max-w-6xl mx-auto px-6">
             <h2 className="text-3xl font-bold text-center mb-4">Start From a Template</h2>
-            <p className="text-center text-gray-600 mb-12">
+            <p className="text-center text-muted-foreground mb-12">
               Pick a pre-designed layout and customize it to your taste
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -137,7 +137,7 @@ export default async function HomePage() {
                     </CardHeader>
                     <CardContent>
                       <Link href={session ? `/designer?template=${template.id}` : "/register"}>
-                        <Button className="w-full bg-primary hover:bg-primary/90">
+                        <Button className="w-full">
                           Use This Template
                         </Button>
                       </Link>
@@ -166,9 +166,9 @@ export default async function HomePage() {
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-primary text-primary-foreground/70 py-12">
         <div className="max-w-6xl mx-auto px-6 text-center">
-          <p className="font-bold text-white text-lg mb-2">Happy Outdoor</p>
+          <p className="font-bold text-primary-foreground text-lg mb-2">Happy Outdoor</p>
           <p className="text-sm">Design beautiful outdoor spaces with curated products</p>
           <p className="text-xs mt-4">&copy; {new Date().getFullYear()} Happy Outdoor. All rights reserved.</p>
         </div>

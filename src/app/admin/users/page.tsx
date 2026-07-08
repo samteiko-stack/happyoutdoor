@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin";
 import { WarningTriangle } from "iconoir-react";
 
 interface User {
@@ -97,10 +98,10 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Users</h1>
-        <p className="text-muted-foreground">Manage registered users</p>
-      </div>
+      <AdminPageHeader
+        title="Users"
+        description="Manage registered users"
+      />
 
       <Card>
         <CardHeader>
@@ -197,7 +198,6 @@ export default function AdminUsersPage() {
             <Button
               onClick={confirmRoleChange}
               disabled={!confirmAdminGrant}
-              className="bg-primary hover:bg-primary/90"
             >
               Grant Admin Access
             </Button>

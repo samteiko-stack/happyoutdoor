@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { UserMenu } from "@/components/UserMenu";
+import { AppShell, AppNav, PageContainer, LoadingState } from "@/components/layout";
 
 interface CanvasItem {
   id: string;
@@ -56,19 +56,11 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   }, [id]);
 
   if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Loading design...</p>
-      </div>
-    );
+    return <LoadingState message="Loading design..." />;
   }
 
   if (!design) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <p className="text-muted-foreground">Design not found</p>
-      </div>
-    );
+    return <LoadingState message="Design not found" />;
   }
 
   const items: CanvasItem[] = JSON.parse(design.layoutData || "[]");
@@ -101,21 +93,22 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-primary font-bold text-xl">Happy Outdoor</Link>
-            <span className="text-gray-300">|</span>
-            <Link href="/designs" className="text-sm text-muted-foreground hover:text-gray-900">My Designs</Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-sm font-medium">{design.name}</span>
-          </div>
-          <UserMenu />
-        </div>
-      </nav>
+    <AppShell surface="muted">
+      <AppNav
+        containerSize="sm"
+        blur
+        breadcrumbs={
+          <>
+            <Link href="/designs" className="text-muted-foreground hover:text-foreground">
+              My Designs
+            </Link>
+            <span className="text-nav-divider">/</span>
+            <span className="font-medium text-foreground">{design.name}</span>
+          </>
+        }
+      />
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
+      <PageContainer size="sm" className="py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Product list */}
           <div className="lg:col-span-2">
@@ -171,7 +164,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                       <p className="text-sm mt-1">You have access to all product links</p>
                     </div>
                     <Link href={`/designs/${design.id}/links`}>
-                      <Button className="w-full bg-primary hover:bg-primary/90">
+                      <Button className="w-full">
                         View Shopping Links
                       </Button>
                     </Link>
@@ -185,7 +178,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                     <form action={`/api/checkout?designId=${design.id}`} method="POST">
                       <Button
                         type="submit"
-                        className="w-full bg-primary hover:bg-primary/90"
+                        className="w-full"
                         size="lg"
                       >
                         Unlock Shopping Links
@@ -234,7 +227,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
             </Card>
           </div>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </AppShell>
   );
 }

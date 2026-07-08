@@ -18,7 +18,7 @@ export function UserMenu() {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return <div className="w-8 h-8 rounded bg-gray-200 animate-pulse" />;
+    return <div className="w-8 h-8 rounded bg-muted animate-pulse" />;
   }
 
   if (!session) {
@@ -28,7 +28,7 @@ export function UserMenu() {
           <Button variant="ghost" size="sm">Sign In</Button>
         </Link>
         <Link href="/register">
-          <Button size="sm" className="bg-primary hover:bg-primary/90">
+          <Button size="sm">
             Get Started
           </Button>
         </Link>
@@ -59,7 +59,7 @@ export function UserMenu() {
           <span className="text-sm font-medium hidden sm:inline-block max-w-[120px] truncate">
             {user.name || user.email}
           </span>
-          <NavArrowDown width={14} height={14} className="text-gray-400" />
+          <NavArrowDown width={14} height={14} className="text-muted-foreground" />
         </button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-56">
@@ -100,7 +100,7 @@ export function UserMenu() {
         <DropdownMenuSeparator />
         <DropdownMenuItem
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="cursor-pointer text-red-600 focus:text-red-600"
+          className="cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut width={16} height={16} className="mr-2" />
           Sign Out

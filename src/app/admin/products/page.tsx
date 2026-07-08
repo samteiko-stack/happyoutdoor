@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Search, SortUp, SortDown, Filter } from "iconoir-react";
+import { AdminPageHeader } from "@/components/admin";
 
 interface Category {
   id: string;
@@ -264,15 +265,11 @@ export default function AdminProductsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Products</h1>
-          <p className="text-muted-foreground">Manage your balcony products</p>
-        </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90">
-          + Add Product
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Products"
+        description="Manage your balcony products"
+        actions={<Button onClick={openCreate}>+ Add Product</Button>}
+      />
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -680,7 +677,7 @@ export default function AdminProductsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={loading || !form.name} className="bg-primary hover:bg-primary/90">
+            <Button onClick={handleSave} disabled={loading || !form.name}>
               {loading ? "Saving..." : editing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

@@ -9,6 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin";
 
 interface Category {
   id: string;
@@ -94,15 +95,11 @@ export default function AdminCategoriesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Categories</h1>
-          <p className="text-muted-foreground">Organize products into categories</p>
-        </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90">
-          + Add Category
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Categories"
+        description="Organize products into categories"
+        actions={<Button onClick={openCreate}>+ Add Category</Button>}
+      />
 
       <Card>
         <CardHeader>
@@ -179,7 +176,7 @@ export default function AdminCategoriesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={loading || !form.name} className="bg-primary hover:bg-primary/90">
+            <Button onClick={handleSave} disabled={loading || !form.name}>
               {loading ? "Saving..." : editing ? "Update" : "Create"}
             </Button>
           </DialogFooter>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { UserMenu } from "@/components/UserMenu";
+import { AppShell, AppNav, PageContainer, PageHeader, LoadingState } from "@/components/layout";
 
 interface CanvasItem {
   id: string;
@@ -49,28 +49,30 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
   }, [id]);
 
   if (loading) {
-    return <div className="min-h-screen flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+    return <LoadingState message="Loading..." />;
   }
 
   if (!design) {
-    return <div className="min-h-screen flex items-center justify-center"><p>Design not found</p></div>;
+    return <LoadingState message="Design not found" />;
   }
 
   if (!design.isPaid) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>Links Not Unlocked</CardTitle>
-            <CardDescription>You need to unlock this design to view product links.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Link href={`/designs/${design.id}`}>
-              <Button className="w-full bg-primary hover:bg-primary/90">Go to Design</Button>
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      <AppShell surface="muted">
+        <div className="min-h-screen flex items-center justify-center p-4">
+          <Card className="max-w-md">
+            <CardHeader>
+              <CardTitle>Links Not Unlocked</CardTitle>
+              <CardDescription>You need to unlock this design to view product links.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Link href={`/designs/${design.id}`}>
+                <Button className="w-full">Go to Design</Button>
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      </AppShell>
     );
   }
 
@@ -85,25 +87,28 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
     .filter(Boolean) as (Product & { count: number })[];
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <nav className="bg-white/80 backdrop-blur-md border-b sticky top-0 z-50">
-        <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="text-primary font-bold text-xl">Happy Outdoor</Link>
-            <span className="text-gray-300">|</span>
-            <Link href="/designs" className="text-sm text-muted-foreground hover:text-gray-900">My Designs</Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-sm font-medium">{design.name} - Shopping Links</span>
-          </div>
-          <UserMenu />
-        </div>
-      </nav>
+    <AppShell surface="muted">
+      <AppNav
+        containerSize="sm"
+        blur
+        breadcrumbs={
+          <>
+            <Link href="/designs" className="text-muted-foreground hover:text-foreground">
+              My Designs
+            </Link>
+            <span className="text-nav-divider">/</span>
+            <span className="font-medium text-foreground">{design.name} — Shopping Links</span>
+          </>
+        }
+      />
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold">Your Shopping Links</h1>
-          <p className="text-muted-foreground">Click on any product to purchase it directly</p>
-        </div>
+      <PageContainer size="sm" className="py-8">
+        <PageHeader
+          size="heading-2"
+          title="Your Shopping Links"
+          description="Click on any product to purchase it directly"
+          className="mb-6"
+        />
 
         <div className="space-y-4">
           {usedProducts.map((product) => (
@@ -117,17 +122,17 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
                       className="w-16 h-16 object-cover rounded-lg"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-100 rounded flex items-center justify-center text-gray-400">
+                    <div className="w-16 h-16 bg-surface-muted rounded-lg flex items-center justify-center text-muted-foreground">
                       <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
                     </div>
                   )}
                   <div>
                     <p className="font-semibold">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-body">
                       {product.category.name} &middot; ${product.price.toFixed(2)}
                     </p>
                     {product.description && (
-                      <p className="text-xs text-muted-foreground mt-1">{product.description}</p>
+                      <p className="text-caption mt-1">{product.description}</p>
                     )}
                   </div>
                 </div>
@@ -135,9 +140,7 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
                   <Badge variant="secondary">x{product.count}</Badge>
                   {product.affiliateLink ? (
                     <a href={product.affiliateLink} target="_blank" rel="noopener noreferrer">
-                      <Button className="bg-primary hover:bg-primary/90">
-                        Shop Now
-                      </Button>
+                      <Button>Shop Now</Button>
                     </a>
                   ) : (
                     <Button variant="outline" disabled>
@@ -158,7 +161,7 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
             <Button variant="outline">All Designs</Button>
           </Link>
         </div>
-      </div>
-    </div>
+      </PageContainer>
+    </AppShell>
   );
 }

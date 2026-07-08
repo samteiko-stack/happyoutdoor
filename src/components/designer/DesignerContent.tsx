@@ -17,7 +17,7 @@ import { EditPencil, FloppyDisk, ViewGrid } from "iconoir-react";
 
 const Canvas = dynamic(
   () => import("@/components/designer/Canvas").then((mod) => ({ default: mod.Canvas })),
-  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center bg-gray-100">Loading canvas...</div> }
+  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center bg-surface-muted">Loading canvas...</div> }
 );
 
 const IsometricScene = dynamic(
@@ -199,7 +199,7 @@ export function DesignerContent() {
           <Link href="/" className="text-primary font-bold text-lg hover:text-primary/80">
             Happy Outdoor
           </Link>
-          <span className="text-gray-300">|</span>
+          <span className="text-nav-divider">|</span>
           {editingName ? (
             <Input
               value={designName}
@@ -236,7 +236,7 @@ export function DesignerContent() {
             onClick={handleSave}
             disabled={saving}
             size="sm"
-            className="bg-primary hover:bg-primary/90 min-w-[120px] relative gap-2"
+            className="min-w-[120px] relative gap-2"
           >
             {saving ? (
               <span className="flex items-center gap-2">

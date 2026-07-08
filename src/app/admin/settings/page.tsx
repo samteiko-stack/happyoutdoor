@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Trash, User, WarningTriangle } from "iconoir-react";
+import { AdminPageHeader } from "@/components/admin";
 
 interface Admin {
   id: string;
@@ -230,12 +231,10 @@ export default function AdminSettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-semibold text-foreground">Admin Settings</h2>
-        <p className="text-sm text-primary mt-1">
-          Manage administrators and your account settings
-        </p>
-      </div>
+      <AdminPageHeader
+        title="Admin Settings"
+        description="Manage administrators and your account settings"
+      />
 
       {/* My Profile */}
       <Card>
@@ -268,7 +267,6 @@ export default function AdminSettingsPage() {
           <Button
             onClick={handleUpdateProfile}
             disabled={updatingProfile}
-            className="bg-primary hover:bg-primary/90"
           >
             {updatingProfile ? "Updating..." : "Update Profile"}
           </Button>
@@ -317,7 +315,6 @@ export default function AdminSettingsPage() {
           <Button
             onClick={handleUpdatePassword}
             disabled={updatingPassword}
-            className="bg-primary hover:bg-primary/90"
           >
             {updatingPassword ? "Updating..." : "Update Password"}
           </Button>
@@ -334,7 +331,7 @@ export default function AdminSettingsPage() {
             </div>
             <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
               <DialogTrigger asChild>
-                <Button className="bg-primary hover:bg-primary/90">
+                <Button>
                   <Plus width={16} height={16} className="mr-2" />
                   Add Admin
                 </Button>
@@ -407,7 +404,6 @@ export default function AdminSettingsPage() {
                   <Button
                     onClick={handleAddAdmin}
                     disabled={addingAdmin || !confirmAdminAdd}
-                    className="bg-primary hover:bg-primary/90"
                   >
                     {addingAdmin ? "Adding..." : "Add Admin"}
                   </Button>

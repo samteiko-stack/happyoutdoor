@@ -24,10 +24,10 @@ export function AdminShell({ session, children }: { session: Session | null; chi
   return (
     <div className="flex h-screen bg-background">
       {/* Sidebar */}
-      <aside className="w-64 flex flex-col border-r border-border bg-white">
+      <aside className="w-64 flex flex-col border-r border-border bg-card">
         <div className="p-6">
-          <h2 className="font-bold text-foreground text-lg">Happy Outdoor</h2>
-          <p className="text-primary text-sm">Admin Panel</p>
+          <h2 className="text-brand text-lg">Happy Outdoor</h2>
+          <p className="text-body mt-1">Admin Panel</p>
         </div>
         <Separator className="bg-border" />
         <nav className="flex-1 p-4 space-y-1">
@@ -57,8 +57,8 @@ export function AdminShell({ session, children }: { session: Session | null; chi
       {/* Main content */}
       <div className="flex flex-1 flex-col min-w-0">
         {/* Header */}
-        <header className="flex h-16 items-center justify-between border-b border-border bg-white px-6">
-          <h1 className="font-semibold text-foreground text-xl">Admin Panel</h1>
+        <header className="flex h-16 items-center justify-between border-b border-border bg-card px-6">
+          <h1 className="text-heading-3">Admin Panel</h1>
           <div className="flex items-center gap-3">
             {session?.user && (
               <div className="flex items-center gap-3">
@@ -96,7 +96,7 @@ export function AdminShell({ session, children }: { session: Session | null; chi
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto p-6">{children}</main>
+        <main className="flex-1 overflow-auto p-[var(--spacing-page-x)]">{children}</main>
       </div>
     </div>
   );

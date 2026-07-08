@@ -12,6 +12,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { AdminPageHeader } from "@/components/admin";
 import { DesignPencil } from "iconoir-react";
 
 interface Template {
@@ -123,15 +124,11 @@ export default function AdminTemplatesPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Templates</h1>
-          <p className="text-muted-foreground">Pre-made balcony designs that users can start from</p>
-        </div>
-        <Button onClick={openCreate} className="bg-primary hover:bg-primary/90">
-          + Add Template
-        </Button>
-      </div>
+      <AdminPageHeader
+        title="Templates"
+        description="Pre-made balcony designs that users can start from"
+        actions={<Button onClick={openCreate}>+ Add Template</Button>}
+      />
 
       <Card>
         <CardHeader>
@@ -228,7 +225,7 @@ export default function AdminTemplatesPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
-            <Button onClick={handleSave} disabled={loading || !form.name} className="bg-[#6b7f3b] hover:bg-[#5a6b32]">
+            <Button onClick={handleSave} disabled={loading || !form.name}>
               {loading ? "Saving..." : editing ? "Update" : "Create"}
             </Button>
           </DialogFooter>
