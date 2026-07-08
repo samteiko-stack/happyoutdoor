@@ -13,6 +13,7 @@ import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { Plus, Trash, User, WarningTriangle } from "iconoir-react";
 import { AdminPageHeader } from "@/components/admin";
+import { useAuth } from "@/components/providers/SupabaseProvider";
 
 interface Admin {
   id: string;
@@ -23,6 +24,7 @@ interface Admin {
 }
 
 export default function AdminSettingsPage() {
+  const { user: authUser } = useAuth();
   const [admins, setAdmins] = useState<Admin[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState<Admin | null>(null);
@@ -45,28 +47,31 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     loadData();
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authUser]);
 
   async function loadData() {
     try {
-      const [adminsRes, sessionRes] = await Promise.all([
-        fetch("/api/admin/users"),
-        fetch("/api/auth/session"),
-      ]);
-      
+      const adminsRes = await fetch("/api/admin/users");
+
       if (adminsRes.ok) {
         const data = await adminsRes.json();
-        const adminUsers = data.filter((u: Admin) => u.role === "admin");
+        const adminUsers = data.filter(
+          (u: Admin) => u.role?.toUpperCase() === "ADMIN"
+        );
         setAdmins(adminUsers);
       }
-      
-      if (sessionRes.ok) {
-        const session = await sessionRes.json();
-        if (session?.user) {
-          setCurrentUser(session.user);
-          setProfileName(session.user.name || "");
-          setProfileEmail(session.user.email || "");
-        }
+
+      if (authUser) {
+        setCurrentUser({
+          id: authUser.id,
+          name: authUser.name,
+          email: authUser.email,
+          role: authUser.role,
+          createdAt: "",
+        });
+        setProfileName(authUser.name || "");
+        setProfileEmail(authUser.email || "");
       }
     } catch (error) {
       console.error("Failed to load data:", error);

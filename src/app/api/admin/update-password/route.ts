@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { auth, isAdmin } from "@/lib/auth";
+import { createClient } from "@/lib/supabase/server";
 
 export async function PUT(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -26,37 +25,26 @@ export async function PUT(req: NextRequest) {
       );
     }
 
-    // Get user with password
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
+    const supabase = await createClient();
+
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email: session.user.email,
+      password: currentPassword,
     });
 
-    if (!user || !user.passwordHash) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    if (signInError) {
+      return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
     }
 
-    // Verify current password
-    const isValid = await bcrypt.compare(currentPassword, user.passwordHash);
-    if (!isValid) {
-      return NextResponse.json(
-        { error: "Current password is incorrect" },
-        { status: 400 }
-      );
-    }
-
-    // Hash and update new password
-    const hashedPassword = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: { passwordHash: hashedPassword },
+    const { error: updateError } = await supabase.auth.updateUser({
+      password: newPassword,
     });
+
+    if (updateError) throw updateError;
 
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Update password error:", error);
-    return NextResponse.json(
-      { error: "Failed to update password" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to update password" }, { status: 500 });
   }
 }

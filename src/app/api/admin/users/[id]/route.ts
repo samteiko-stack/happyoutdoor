@@ -1,78 +1,60 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
-    return null;
-  }
-  return session;
-}
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapProfile } from "@/lib/mappers";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
-    const { role } = body;
 
-    if (role === undefined) {
-      return NextResponse.json(
-        { error: "Role is required" },
-        { status: 400 }
-      );
+    if (body.role === undefined) {
+      return NextResponse.json({ error: "Role is required" }, { status: 400 });
     }
 
-    const user = await prisma.user.update({
-      where: { id },
-      data: { role },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("profiles")
+      .update({ role: body.role.toUpperCase() })
+      .eq("id", id)
+      .select("*")
+      .single();
 
-    return NextResponse.json(user);
+    if (error) throw error;
+
+    return NextResponse.json(mapProfile(data));
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
+    const admin = createAdminClient();
 
-    await prisma.user.delete({
-      where: { id },
-    });
+    // Delete auth user (cascades to profile via FK)
+    const { error } = await admin.auth.admin.deleteUser(id);
+    if (error) throw error;
 
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

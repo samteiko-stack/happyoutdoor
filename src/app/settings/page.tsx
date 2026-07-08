@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/SupabaseProvider";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -67,7 +67,7 @@ export default function SettingsPage() {
         setUser((prev) => prev ? { ...prev, ...updated } : prev);
         toast.success("Profile updated successfully");
         // Update the session to reflect new name/email
-        await updateSession({ name, email });
+        await updateSession();
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to update profile");

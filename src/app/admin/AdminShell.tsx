@@ -2,12 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { signOut } from "next-auth/react";
 import { ViewGrid, Package, Folder, MultiplePages, Group, Settings, LogOut } from "iconoir-react";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import type { Session } from "next-auth";
+import { createClient } from "@/lib/supabase/client";
+import type { AuthUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/admin", label: "Overview", icon: ViewGrid },
@@ -18,7 +18,7 @@ const navItems = [
   { href: "/admin/settings", label: "Settings", icon: Settings },
 ];
 
-export function AdminShell({ session, children }: { session: Session | null; children: React.ReactNode }) {
+export function AdminShell({ session, children }: { session: { user: AuthUser } | null; children: React.ReactNode }) {
   const pathname = usePathname();
 
   return (
@@ -86,7 +86,11 @@ export function AdminShell({ session, children }: { session: Session | null; chi
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => {
+                const supabase = createClient();
+                await supabase.auth.signOut();
+                window.location.href = "/login";
+              }}
               className="text-muted-foreground hover:text-foreground gap-2"
             >
               <LogOut width={16} height={16} />

@@ -1,6 +1,7 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapDesign, mapTemplate } from "@/lib/mappers";
 import Link from "next/link";
 import { Plus, DesignPencil } from "iconoir-react";
 import { AppShell, AppNav, PageContainer, PageHeader } from "@/components/layout";
@@ -14,21 +15,29 @@ export default async function DashboardPage() {
     redirect("/login");
   }
 
-  let designs: any[] = [];
-  let templates: any[] = [];
+  let designs: ReturnType<typeof mapDesign>[] = [];
+  let templates: ReturnType<typeof mapTemplate>[] = [];
 
   try {
-    designs = await prisma.design.findMany({
-      where: { userId: session.user.id },
-      orderBy: { updatedAt: "desc" },
-      take: 6,
-    });
+    const admin = createAdminClient();
 
-    templates = await prisma.template.findMany({
-      where: { isPublished: true },
-      orderBy: { createdAt: "desc" },
-      take: 3,
-    });
+    const { data: designRows } = await admin
+      .from("designs")
+      .select("*")
+      .eq("user_id", session.user.id)
+      .order("updated_at", { ascending: false })
+      .limit(6);
+
+    designs = (designRows ?? []).map((row) => mapDesign(row));
+
+    const { data: templateRows } = await admin
+      .from("templates")
+      .select("*")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(3);
+
+    templates = (templateRows ?? []).map(mapTemplate);
   } catch (error) {
     console.error("Dashboard data error:", error);
   }
@@ -48,7 +57,6 @@ export default async function DashboardPage() {
           description="Ready to design your dream balcony?"
         />
 
-        {/* Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-[var(--spacing-section)]">
           <Link
             href="/designer"
@@ -81,7 +89,6 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Templates */}
         {templates.length > 0 && (
           <section className="mb-[var(--spacing-section)]">
             <h2 className="text-heading-2 mb-6">Start From a Template</h2>
@@ -113,7 +120,6 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Recent Designs */}
         {designs.length > 0 && (
           <section>
             <div className="flex items-center justify-between mb-6">
@@ -147,7 +153,6 @@ export default async function DashboardPage() {
           </section>
         )}
 
-        {/* Empty State */}
         {designs.length === 0 && (
           <Card className="p-12 text-center">
             <div className="max-w-md mx-auto">

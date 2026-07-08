@@ -1,6 +1,7 @@
 "use client";
 
-import { useSession, signOut } from "next-auth/react";
+import { useSession } from "@/components/providers/SupabaseProvider";
+import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
 import { MediaImageList, DesignPencil, Settings, ViewGrid, LogOut, NavArrowDown } from "iconoir-react";
 import { Button } from "@/components/ui/button";
@@ -99,7 +100,11 @@ export function UserMenu() {
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          onClick={() => signOut({ callbackUrl: "/login" })}
+          onClick={async () => {
+            const supabase = createClient();
+            await supabase.auth.signOut();
+            window.location.href = "/login";
+          }}
           className="cursor-pointer text-destructive focus:text-destructive"
         >
           <LogOut width={16} height={16} className="mr-2" />

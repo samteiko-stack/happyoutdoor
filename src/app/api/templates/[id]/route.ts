@@ -1,26 +1,27 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapTemplate } from "@/lib/mappers";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params;
-    const template = await prisma.template.findUnique({
-      where: { id },
-    });
+    const admin = createAdminClient();
 
-    if (!template) {
-      return NextResponse.json({ error: "Template not found" }, { status: 404 });
+    const { data, error } = await admin
+      .from("templates")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error || !data) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    return NextResponse.json(template);
-  } catch (error: any) {
-    console.error("Template fetch error:", error);
-    return NextResponse.json(
-      { error: error.message || "Failed to fetch template" },
-      { status: 500 }
-    );
+    return NextResponse.json(mapTemplate(data));
+  } catch {
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

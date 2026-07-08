@@ -1,42 +1,34 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
-    return null;
-  }
-  return session;
-}
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapProduct, toDbProduct } from "@/lib/mappers";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
+    const admin = createAdminClient();
 
-    const product = await prisma.product.findUnique({
-      where: { id },
-      include: { category: true },
-    });
+    const { data, error } = await admin
+      .from("products")
+      .select("*, categories(*)")
+      .eq("id", id)
+      .single();
 
-    if (!product) {
+    if (error || !data) {
       return NextResponse.json({ error: "Product not found" }, { status: 404 });
     }
 
-    return NextResponse.json(product);
+    return NextResponse.json(mapProduct(data, data.categories));
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
@@ -45,76 +37,59 @@ export async function PUT(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
-    const {
-      name,
-      categoryId,
-      description,
-      price,
-      affiliateLink,
-      imageUrl,
-      topViewImageUrl,
-      modelUrl,
-      widthCm,
-      heightCm,
-    } = body;
+    const admin = createAdminClient();
 
-    const product = await prisma.product.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(categoryId !== undefined && { 
-          categoryId: categoryId || null
-        }),
-        ...(description !== undefined && { description }),
-        ...(price !== undefined && { price }),
-        ...(affiliateLink !== undefined && { affiliateLink }),
-        ...(imageUrl !== undefined && { imageUrl }),
-        ...(topViewImageUrl !== undefined && { topViewImageUrl }),
-        ...(modelUrl !== undefined && { modelUrl }),
-        ...(widthCm !== undefined && { widthCm }),
-        ...(heightCm !== undefined && { heightCm }),
-      },
-      include: { category: true },
-    });
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.categoryId !== undefined) updateData.category_id = body.categoryId || null;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.price !== undefined) updateData.price = body.price;
+    if (body.affiliateLink !== undefined) updateData.affiliate_link = body.affiliateLink;
+    if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
+    if (body.topViewImageUrl !== undefined) updateData.top_view_image_url = body.topViewImageUrl;
+    if (body.modelUrl !== undefined) updateData.model_url = body.modelUrl;
+    if (body.widthCm !== undefined) updateData.width_cm = body.widthCm;
+    if (body.heightCm !== undefined) updateData.height_cm = body.heightCm;
 
-    return NextResponse.json(product);
+    const { data, error } = await admin
+      .from("products")
+      .update(updateData)
+      .eq("id", id)
+      .select("*, categories(*)")
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(mapProduct(data, data.categories));
   } catch (error) {
     console.error("Update product error:", error);
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-
-    await prisma.product.delete({
-      where: { id },
-    });
+    const admin = createAdminClient();
+    await admin.from("products").delete().eq("id", id);
 
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

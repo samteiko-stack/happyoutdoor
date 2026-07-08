@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapDesign } from "@/lib/mappers";
 
 export async function GET(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -13,24 +14,23 @@ export async function GET(
     }
 
     const { id } = await params;
+    const admin = createAdminClient();
 
-    const design = await prisma.design.findUnique({
-      where: { id },
-      include: { template: true },
-    });
+    const { data, error } = await admin
+      .from("designs")
+      .select("*, templates(*)")
+      .eq("id", id)
+      .single();
 
-    if (!design) {
-      console.error(`Design not found: ${id}`);
+    if (error || !data) {
       return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
-    const userRole = (session.user as { role: string }).role?.toUpperCase();
-    if (design.userId !== session.user.id && userRole !== "ADMIN") {
-      console.error(`Unauthorized: design.userId=${design.userId}, session.user.id=${session.user.id}`);
+    if (data.user_id !== session.user.id && !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    return NextResponse.json(design);
+    return NextResponse.json(mapDesign(data, data.templates));
   } catch (error) {
     console.error("GET design error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
@@ -49,35 +49,47 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json();
+    const admin = createAdminClient();
 
-    const existing = await prisma.design.findUnique({ where: { id } });
-    if (!existing || existing.userId !== session.user.id) {
+    const { data: existing } = await admin
+      .from("designs")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (!existing || existing.user_id !== session.user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    const design = await prisma.design.update({
-      where: { id },
-      data: {
-        name: body.name ?? existing.name,
-        balconyWidthCm: body.balconyWidthCm ?? existing.balconyWidthCm,
-        balconyHeightCm: body.balconyHeightCm ?? existing.balconyHeightCm,
-        layoutData: body.layoutData
-          ? typeof body.layoutData === "string"
-            ? body.layoutData
-            : JSON.stringify(body.layoutData)
-          : existing.layoutData,
-        ...(body.thumbnailUrl && { thumbnailUrl: body.thumbnailUrl }),
-      },
-    });
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.balconyWidthCm !== undefined) updateData.balcony_width_cm = body.balconyWidthCm;
+    if (body.balconyHeightCm !== undefined) updateData.balcony_height_cm = body.balconyHeightCm;
+    if (body.layoutData !== undefined) {
+      updateData.layout_data =
+        typeof body.layoutData === "string"
+          ? body.layoutData
+          : JSON.stringify(body.layoutData);
+    }
+    if (body.thumbnailUrl) updateData.thumbnail_url = body.thumbnailUrl;
 
-    return NextResponse.json(design);
+    const { data, error } = await admin
+      .from("designs")
+      .update(updateData)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(mapDesign(data));
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -87,12 +99,19 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const existing = await prisma.design.findUnique({ where: { id } });
-    if (!existing || existing.userId !== session.user.id) {
+    const admin = createAdminClient();
+
+    const { data: existing } = await admin
+      .from("designs")
+      .select("user_id")
+      .eq("id", id)
+      .single();
+
+    if (!existing || existing.user_id !== session.user.id) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    await prisma.design.delete({ where: { id } });
+    await admin.from("designs").delete().eq("id", id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

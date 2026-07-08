@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapCategory } from "@/lib/mappers";
 
 export async function GET() {
   try {
-    const categories = await prisma.category.findMany({
-      orderBy: { sortOrder: "asc" },
-    });
-    return NextResponse.json(categories);
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("categories")
+      .select("*")
+      .order("sort_order");
+
+    if (error) throw error;
+
+    return NextResponse.json(data.map(mapCategory));
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }

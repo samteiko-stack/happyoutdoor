@@ -1,63 +1,57 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapCategory, toDbCategory } from "@/lib/mappers";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
     const session = await auth();
-    if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const categories = await prisma.category.findMany({
-      orderBy: { sortOrder: "asc" },
-      include: {
-        _count: {
-          select: { products: true },
-        },
-      },
-    });
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("categories")
+      .select("*, products(count)")
+      .order("sort_order");
 
-    return NextResponse.json(categories);
-  } catch {
+    if (error) throw error;
+
     return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
+      data.map((row) => ({
+        ...mapCategory(row),
+        _count: { products: (row.products as { count: number }[])?.[0]?.count ?? 0 },
+      }))
     );
+  } catch {
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await req.json();
-    const { name, slug, icon, sortOrder } = body;
-
-    if (!name || !slug) {
-      return NextResponse.json(
-        { error: "Name and slug are required" },
-        { status: 400 }
-      );
+    if (!body.name || !body.slug) {
+      return NextResponse.json({ error: "Name and slug are required" }, { status: 400 });
     }
 
-    const category = await prisma.category.create({
-      data: {
-        name,
-        slug,
-        icon: icon ?? null,
-        sortOrder: sortOrder ?? 0,
-      },
-    });
+    const admin = createAdminClient();
+    const { data, error } = await admin
+      .from("categories")
+      .insert(toDbCategory(body))
+      .select("*")
+      .single();
 
-    return NextResponse.json(category, { status: 201 });
+    if (error) throw error;
+
+    return NextResponse.json(mapCategory(data), { status: 201 });
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

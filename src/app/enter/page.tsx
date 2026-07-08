@@ -3,8 +3,9 @@ import { redirect } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapTemplate } from "@/lib/mappers";
 import { UserMenu } from "@/components/UserMenu";
 import { HowItWorksIcons } from "@/components/HowItWorksIcons";
 
@@ -21,27 +22,31 @@ export default async function HomePage() {
     }
   }
   
-  let templates: Array<{
-    id: string;
-    name: string;
-    description: string | null;
-    thumbnailUrl: string | null;
-    balconyWidthCm: number;
-    balconyHeightCm: number;
-    layoutData: string;
-  }> = [];
+  let templates: ReturnType<typeof mapTemplate>[] = [];
   let productCount = 0;
   let categoryCount = 0;
 
   try {
-    templates = await prisma.template.findMany({
-      where: { isPublished: true },
-      orderBy: { createdAt: "desc" },
-      take: 6,
-    });
+    const admin = createAdminClient();
 
-    productCount = await prisma.product.count();
-    categoryCount = await prisma.category.count();
+    const { data: templateRows } = await admin
+      .from("templates")
+      .select("*")
+      .eq("is_published", true)
+      .order("created_at", { ascending: false })
+      .limit(6);
+
+    templates = (templateRows ?? []).map(mapTemplate);
+
+    const { count: pCount } = await admin
+      .from("products")
+      .select("*", { count: "exact", head: true });
+    productCount = pCount ?? 0;
+
+    const { count: cCount } = await admin
+      .from("categories")
+      .select("*", { count: "exact", head: true });
+    categoryCount = cCount ?? 0;
   } catch (error) {
     console.error("Database query error:", error);
   }

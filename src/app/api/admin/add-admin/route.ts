@@ -1,60 +1,61 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import bcrypt from "bcryptjs";
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapProfile } from "@/lib/mappers";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth();
-    if (!session?.user || session.user.role !== "admin") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { email, name } = await req.json();
-
     if (!email) {
       return NextResponse.json({ error: "Email is required" }, { status: 400 });
     }
 
-    // Check if user already exists
-    const existing = await prisma.user.findUnique({
-      where: { email },
-    });
+    const admin = createAdminClient();
+
+    const { data: existing } = await admin
+      .from("profiles")
+      .select("id")
+      .eq("email", email)
+      .single();
 
     if (existing) {
-      return NextResponse.json(
-        { error: "User with this email already exists" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "User with this email already exists" }, { status: 400 });
     }
 
-    // Create admin user with a temporary password (they should change it)
-    const tempPassword = Math.random().toString(36).slice(-10);
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+    const tempPassword = Math.random().toString(36).slice(-10) + "A1!";
 
-    const newAdmin = await prisma.user.create({
-      data: {
-        email,
-        name: name || null,
-        passwordHash: hashedPassword,
-        role: "admin",
-      },
+    const { data: authData, error: authError } = await admin.auth.admin.createUser({
+      email,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { name: name || null },
     });
 
-    // TODO: Send email with temporary password
+    if (authError || !authData.user) {
+      throw authError ?? new Error("Failed to create user");
+    }
+
+    await admin
+      .from("profiles")
+      .update({ role: "ADMIN", name: name || null })
+      .eq("id", authData.user.id);
+
     console.log(`New admin created: ${email} with temp password: ${tempPassword}`);
 
-    return NextResponse.json({
-      id: newAdmin.id,
-      email: newAdmin.email,
-      name: newAdmin.name,
-      role: newAdmin.role,
-    });
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("*")
+      .eq("id", authData.user.id)
+      .single();
+
+    return NextResponse.json(mapProfile(profile!));
   } catch (error) {
     console.error("Add admin error:", error);
-    return NextResponse.json(
-      { error: "Failed to add admin" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to add admin" }, { status: 500 });
   }
 }

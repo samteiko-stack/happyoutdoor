@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { signIn, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -10,17 +9,19 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Logo } from "@/components/Logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { createClient } from "@/lib/supabase/client";
+import { useSession } from "@/components/providers/SupabaseProvider";
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const supabase = createClient();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      const userRole = (session.user as any).role?.toUpperCase();
+      const userRole = session.user.role?.toUpperCase();
       if (userRole === "ADMIN") {
         router.push("/admin");
       } else {
@@ -38,18 +39,15 @@ export default function LoginPage() {
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
 
-    const result = await signIn("credentials", {
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password,
-      redirect: false,
     });
 
-    if (result?.error) {
+    if (signInError) {
       setError("Invalid email or password");
       setLoading(false);
     } else {
-      // Wait for session to update, then redirect will happen via useEffect
-      // This prevents the double-navigation issue
       setLoading(false);
     }
   }
@@ -73,23 +71,11 @@ export default function LoginPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-              />
+              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="Your password"
-                required
-              />
+              <Input id="password" name="password" type="password" placeholder="Your password" required />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3 pt-6">

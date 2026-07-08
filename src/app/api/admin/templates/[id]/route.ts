@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapTemplate } from "@/lib/mappers";
 
 export async function PUT(
   req: NextRequest,
@@ -8,44 +9,52 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
+    const admin = createAdminClient();
 
-    const template = await prisma.template.update({
-      where: { id },
-      data: {
-        ...(body.name !== undefined && { name: body.name }),
-        ...(body.description !== undefined && { description: body.description }),
-        ...(body.balconyWidthCm !== undefined && { balconyWidthCm: body.balconyWidthCm }),
-        ...(body.balconyHeightCm !== undefined && { balconyHeightCm: body.balconyHeightCm }),
-        ...(body.layoutData !== undefined && { layoutData: body.layoutData }),
-        ...(body.isPublished !== undefined && { isPublished: body.isPublished }),
-        ...(body.thumbnailUrl && { thumbnailUrl: body.thumbnailUrl }),
-      },
-    });
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.balconyWidthCm !== undefined) updateData.balcony_width_cm = body.balconyWidthCm;
+    if (body.balconyHeightCm !== undefined) updateData.balcony_height_cm = body.balconyHeightCm;
+    if (body.layoutData !== undefined) updateData.layout_data = body.layoutData;
+    if (body.isPublished !== undefined) updateData.is_published = body.isPublished;
+    if (body.thumbnailUrl) updateData.thumbnail_url = body.thumbnailUrl;
 
-    return NextResponse.json(template);
+    const { data, error } = await admin
+      .from("templates")
+      .update(updateData)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(mapTemplate(data));
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth();
-    if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-    await prisma.template.delete({ where: { id } });
+    const admin = createAdminClient();
+    await admin.from("templates").delete().eq("id", id);
+
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { hash, compare } from "bcryptjs";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { mapProfile } from "@/lib/mappers";
 
 export async function GET() {
   try {
@@ -10,19 +11,31 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-        _count: { select: { designs: true } },
-      },
-    });
+    const admin = createAdminClient();
+    const { data: profile, error } = await admin
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
 
-    return NextResponse.json(user);
+    if (error || !profile) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const { count: designCount } = await admin
+      .from("designs")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", session.user.id);
+
+    const { count: paymentCount } = await admin
+      .from("payments")
+      .select("*", { count: "exact", head: true })
+      .eq("user_id", session.user.id);
+
+    return NextResponse.json({
+      ...mapProfile(profile),
+      _count: { designs: designCount ?? 0, payments: paymentCount ?? 0 },
+    });
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
@@ -37,31 +50,20 @@ export async function PUT(req: NextRequest) {
 
     const body = await req.json();
     const { name, email, currentPassword, newPassword } = body;
+    const admin = createAdminClient();
+    const supabase = await createClient();
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-    });
+    if (email && email !== session.user.email) {
+      const { data: existing } = await admin
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .single();
 
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
-
-    // If changing email, check it's not taken
-    if (email && email !== user.email) {
-      const existing = await prisma.user.findUnique({ where: { email } });
       if (existing) {
-        return NextResponse.json(
-          { error: "This email is already in use" },
-          { status: 409 }
-        );
+        return NextResponse.json({ error: "This email is already in use" }, { status: 409 });
       }
     }
-
-    // If changing password, verify current password
-    const updateData: { name?: string; email?: string; passwordHash?: string } = {};
-
-    if (name !== undefined) updateData.name = name;
-    if (email !== undefined) updateData.email = email;
 
     if (newPassword) {
       if (!currentPassword) {
@@ -71,12 +73,13 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      const isValid = await compare(currentPassword, user.passwordHash);
-      if (!isValid) {
-        return NextResponse.json(
-          { error: "Current password is incorrect" },
-          { status: 400 }
-        );
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        return NextResponse.json({ error: "Current password is incorrect" }, { status: 400 });
       }
 
       if (newPassword.length < 6) {
@@ -86,22 +89,31 @@ export async function PUT(req: NextRequest) {
         );
       }
 
-      updateData.passwordHash = await hash(newPassword, 12);
+      const { error: pwError } = await supabase.auth.updateUser({ password: newPassword });
+      if (pwError) throw pwError;
     }
 
-    const updated = await prisma.user.update({
-      where: { id: session.user.id },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        createdAt: true,
-      },
-    });
+    const profileUpdate: Record<string, unknown> = {};
+    if (name !== undefined) profileUpdate.name = name;
+    if (email !== undefined) profileUpdate.email = email;
 
-    return NextResponse.json(updated);
+    if (email || name) {
+      await admin.auth.admin.updateUserById(session.user.id, {
+        ...(email && { email }),
+        user_metadata: { name: name ?? session.user.name },
+      });
+    }
+
+    const { data: updated, error } = await admin
+      .from("profiles")
+      .update(profileUpdate)
+      .eq("id", session.user.id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(mapProfile(updated));
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }

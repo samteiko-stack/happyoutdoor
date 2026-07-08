@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { put } from "@vercel/blob";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: NextRequest) {
   try {
@@ -15,16 +15,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const filename = `snapshots/${Date.now()}-${session.user.id}.jpg`;
-    const blob = await put(filename, file, {
-      access: "public",
-      addRandomSuffix: false,
+    const path = `${Date.now()}-${session.user.id}.jpg`;
+    const admin = createAdminClient();
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const { error } = await admin.storage.from("snapshots").upload(path, buffer, {
+      contentType: "image/jpeg",
+      upsert: true,
     });
 
-    return NextResponse.json({ url: blob.url });
+    if (error) throw error;
+
+    const { data: urlData } = admin.storage.from("snapshots").getPublicUrl(path);
+
+    return NextResponse.json({ url: urlData.publicUrl });
   } catch (error) {
     console.error("Snapshot upload error:", error);
-    // Return null URL gracefully — snapshot is non-critical
     return NextResponse.json({ url: null });
   }
 }

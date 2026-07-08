@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -9,17 +8,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { createClient } from "@/lib/supabase/client";
+import { useSession } from "@/components/providers/SupabaseProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const supabase = createClient();
 
-  // Redirect if already logged in
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      const userRole = (session.user as any).role?.toUpperCase();
+      const userRole = session.user.role?.toUpperCase();
       if (userRole === "ADMIN") {
         router.push("/admin");
       } else {
@@ -37,13 +38,6 @@ export default function RegisterPage() {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const password = formData.get("password") as string;
-    const confirmPassword = formData.get("confirmPassword") as string;
-
-    if (password !== confirmPassword) {
-      setError("Passwords do not match");
-      setLoading(false);
-      return;
-    }
 
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
@@ -51,26 +45,21 @@ export default function RegisterPage() {
       return;
     }
 
-    try {
-      const res = await fetch("/api/auth/register", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, password }),
-      });
+    const { error: signUpError } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+      },
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || "Something went wrong");
-        setLoading(false);
-        return;
-      }
-
-      router.push("/login?registered=true");
-    } catch {
-      setError("Something went wrong");
+    if (signUpError) {
+      setError(signUpError.message);
       setLoading(false);
+      return;
     }
+
+    router.push("/dashboard");
   }
 
   return (
@@ -90,43 +79,15 @@ export default function RegisterPage() {
             )}
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                type="text"
-                placeholder="Your name"
-                required
-              />
+              <Input id="name" name="name" type="text" placeholder="Your name" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@example.com"
-                required
-              />
+              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
             </div>
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                placeholder="At least 6 characters"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirm Password</Label>
-              <Input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                placeholder="Repeat your password"
-                required
-              />
+              <Input id="password" name="password" type="password" placeholder="At least 6 characters" required />
             </div>
           </CardContent>
           <CardFooter className="flex flex-col gap-3 pt-6">

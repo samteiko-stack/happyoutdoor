@@ -1,69 +1,59 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-
-async function requireAdmin() {
-  const session = await auth();
-  if (!session || (session.user as { role?: string }).role?.toUpperCase() !== "ADMIN") {
-    return null;
-  }
-  return session;
-}
+import { auth, isAdmin } from "@/lib/auth";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { mapCategory } from "@/lib/mappers";
 
 export async function PUT(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
     const body = await req.json();
-    const { name, slug, icon, sortOrder } = body;
+    const admin = createAdminClient();
 
-    const category = await prisma.category.update({
-      where: { id },
-      data: {
-        ...(name !== undefined && { name }),
-        ...(slug !== undefined && { slug }),
-        ...(icon !== undefined && { icon }),
-        ...(sortOrder !== undefined && { sortOrder }),
-      },
-    });
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.slug !== undefined) updateData.slug = body.slug;
+    if (body.icon !== undefined) updateData.icon = body.icon;
+    if (body.sortOrder !== undefined) updateData.sort_order = body.sortOrder;
 
-    return NextResponse.json(category);
+    const { data, error } = await admin
+      .from("categories")
+      .update(updateData)
+      .eq("id", id)
+      .select("*")
+      .single();
+
+    if (error) throw error;
+
+    return NextResponse.json(mapCategory(data));
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }
 
 export async function DELETE(
-  req: NextRequest,
+  _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireAdmin();
-    if (!session) {
+    const session = await auth();
+    if (!session || !isAdmin(session.user)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
-
-    await prisma.category.delete({
-      where: { id },
-    });
+    const admin = createAdminClient();
+    await admin.from("categories").delete().eq("id", id);
 
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json(
-      { error: "Something went wrong" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useSession } from "next-auth/react";
+import { useSession } from "@/components/providers/SupabaseProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useDesignerStore } from "@/lib/designer-store";

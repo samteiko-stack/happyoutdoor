@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe } from "@/lib/stripe";
-import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
 import Stripe from "stripe";
 
 export async function POST(req: NextRequest) {
@@ -27,24 +27,18 @@ export async function POST(req: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const designId = session.metadata?.designId;
-    const userId = session.metadata?.userId;
 
-    if (designId && userId) {
-      // Update design as paid
-      await prisma.design.update({
-        where: { id: designId },
-        data: { isPaid: true },
-      });
+    if (designId) {
+      const admin = createAdminClient();
 
-      // Update payment status
-      await prisma.payment.updateMany({
-        where: {
-          stripeSessionId: session.id,
-        },
-        data: { status: "completed" },
-      });
+      await admin.from("designs").update({ is_paid: true }).eq("id", designId);
 
-      console.log(`Design ${designId} unlocked for user ${userId}`);
+      await admin
+        .from("payments")
+        .update({ status: "completed" })
+        .eq("stripe_session_id", session.id);
+
+      console.log(`Design ${designId} unlocked`);
     }
   }
 

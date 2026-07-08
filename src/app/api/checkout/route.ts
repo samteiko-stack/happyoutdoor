@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
 
 export async function POST(req: NextRequest) {
@@ -17,16 +17,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Design ID required" }, { status: 400 });
     }
 
-    const design = await prisma.design.findUnique({ where: { id: designId } });
-    if (!design || design.userId !== session.user.id) {
+    const admin = createAdminClient();
+    const { data: design } = await admin
+      .from("designs")
+      .select("*")
+      .eq("id", designId)
+      .single();
+
+    if (!design || design.user_id !== session.user.id) {
       return NextResponse.json({ error: "Design not found" }, { status: 404 });
     }
 
-    if (design.isPaid) {
+    if (design.is_paid) {
       return NextResponse.redirect(new URL(`/designs/${designId}/links`, req.url));
     }
 
-    const amount = parseInt(process.env.DESIGN_UNLOCK_PRICE || "999"); // cents
+    const amount = parseInt(process.env.DESIGN_UNLOCK_PRICE || "999");
 
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -52,15 +58,12 @@ export async function POST(req: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/designs/${designId}?canceled=true`,
     });
 
-    // Create payment record
-    await prisma.payment.create({
-      data: {
-        userId: session.user.id,
-        designId: design.id,
-        amount,
-        stripeSessionId: checkoutSession.id,
-        status: "pending",
-      },
+    await admin.from("payments").insert({
+      user_id: session.user.id,
+      design_id: design.id,
+      amount,
+      stripe_session_id: checkoutSession.id,
+      status: "pending",
     });
 
     return NextResponse.redirect(checkoutSession.url!, 303);

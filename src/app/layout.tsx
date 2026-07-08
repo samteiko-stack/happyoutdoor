@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
-import SessionProvider from "@/components/providers/SessionProvider";
+import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { Toaster } from "@/components/ui/sonner";
 
 const dmSans = DM_Sans({
@@ -26,7 +26,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${dmSans.variable} font-sans antialiased`}>
-        <SessionProvider>
+        <SupabaseProvider>
           {children}
           <Toaster 
             position="top-center"
@@ -43,7 +43,7 @@ export default function RootLayout({
               className: 'toast-custom',
             }}
           />
-        </SessionProvider>
+        </SupabaseProvider>
       </body>
     </html>
   );
