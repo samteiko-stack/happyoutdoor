@@ -1,10 +1,9 @@
 import { createClient } from "@supabase/supabase-js";
+import { getSupabaseServiceRoleKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 /** Service-role client — bypasses RLS. Use only in server-side API routes after auth checks. */
 export function createAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-    process.env.SUPABASE_SERVICE_ROLE_KEY ?? "placeholder",
-    { auth: { autoRefreshToken: false, persistSession: false } }
-  );
+  return createClient(getSupabaseUrl(), getSupabaseServiceRoleKey(), {
+    auth: { autoRefreshToken: false, persistSession: false },
+  });
 }

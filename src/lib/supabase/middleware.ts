@@ -2,6 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { isAdminRole, isCustomerWorkspacePath } from "@/lib/auth-routes";
+import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/env";
 
 const PUBLIC_PATHS = new Set([
   "/",
@@ -79,26 +80,22 @@ export async function updateSession(request: NextRequest) {
 
   let supabaseResponse = NextResponse.next({ request });
 
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? "https://placeholder.supabase.co",
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "placeholder",
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
+  const supabase = createServerClient(getSupabaseUrl(), getSupabaseAnonKey(), {
+    cookies: {
+      getAll() {
+        return request.cookies.getAll();
       },
-    }
-  );
+      setAll(cookiesToSet) {
+        cookiesToSet.forEach(({ name, value }) =>
+          request.cookies.set(name, value)
+        );
+        supabaseResponse = NextResponse.next({ request });
+        cookiesToSet.forEach(({ name, value, options }) =>
+          supabaseResponse.cookies.set(name, value, options)
+        );
+      },
+    },
+  });
 
   const sessionResult = await withTimeout(supabase.auth.getSession(), AUTH_TIMEOUT_MS);
 

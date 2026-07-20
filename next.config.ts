@@ -1,10 +1,9 @@
 import type { NextConfig } from "next";
+import { getSupabaseUrl } from "./src/lib/supabase/env";
 
 const supabaseHost = (() => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  if (!url) return null;
   try {
-    return new URL(url).hostname;
+    return new URL(getSupabaseUrl()).hostname;
   } catch {
     return null;
   }
@@ -20,6 +19,7 @@ const nextConfig: NextConfig = {
     return [{ source: "/enter", destination: "/login", permanent: true }];
   },
   images: {
+    unoptimized: true,
     qualities: [75, 85, 90],
     remotePatterns: [
       { protocol: "https", hostname: "images.unsplash.com" },

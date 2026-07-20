@@ -6,6 +6,7 @@ import {
   getDesignOwnedByUser,
   notFoundResponse,
 } from "@/lib/authorization";
+import { getAppUrl } from "@/lib/supabase/env";
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,8 +55,8 @@ export async function POST(req: NextRequest) {
         designId: design.id,
         userId: session.user.id,
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL}/designs/${designId}/links?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/designs/${designId}?canceled=true`,
+      success_url: `${getAppUrl()}/designs/${designId}/links?success=true`,
+      cancel_url: `${getAppUrl()}/designs/${designId}?canceled=true`,
     });
 
     await admin.from("payments").insert({
