@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  createElement,
   useEffect,
   useRef,
   useState,
@@ -59,14 +60,14 @@ export function LandingReveal({
 }: RevealProps) {
   const { ref, inView } = useInViewOnce<HTMLElement>();
 
-  return (
-    <Tag
-      ref={ref}
-      className={cn("landing-reveal", inView && "is-inview", className)}
-      style={{ "--reveal-delay": `${delay}ms` } as CSSProperties}
-    >
-      {children}
-    </Tag>
+  return createElement(
+    Tag,
+    {
+      ref,
+      className: cn("landing-reveal", inView && "is-inview", className),
+      style: { "--reveal-delay": `${delay}ms` } as CSSProperties,
+    },
+    children
   );
 }
 

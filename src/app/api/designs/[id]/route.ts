@@ -59,7 +59,7 @@ export async function PUT(
 
     if (error) throw error;
 
-    const templateId = existing.template_id as string | null;
+    const templateId = existing.template_id;
     if (templateId && body.thumbnailUrl) {
       await syncTemplateThumbnail(admin, templateId, body.thumbnailUrl as string, {
         isAdmin: isAdmin(session.user),

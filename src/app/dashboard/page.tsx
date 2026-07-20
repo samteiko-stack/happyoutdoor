@@ -10,6 +10,8 @@ import { ScrollRail } from "@/components/ui/scroll-rail";
 import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
 import { TemplateCard } from "@/components/dashboard/template-card";
 
+export const dynamic = "force-dynamic";
+
 export default async function DashboardPage() {
   const session = await requireCustomerUser();
 

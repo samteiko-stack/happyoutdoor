@@ -3,8 +3,18 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import type { AuthUser } from "@/lib/auth-types";
 import { isAdmin } from "@/lib/auth-types";
 
-type DesignRow = Record<string, unknown> & {
+type DesignRow = {
+  id: string;
   user_id: string;
+  name: string;
+  template_id: string | null;
+  balcony_width_cm: number;
+  balcony_height_cm: number;
+  layout_data: string;
+  thumbnail_url: string | null;
+  is_paid: boolean;
+  created_at: string;
+  updated_at: string;
   templates?: Record<string, unknown> | null;
 };
 
@@ -37,7 +47,7 @@ export async function getDesignForUser(
     .single();
 
   if (error || !data) return null;
-  if (!ownsResource(data.user_id as string, user)) return null;
+  if (!ownsResource(data.user_id, user)) return null;
   return data as DesignRow;
 }
 
