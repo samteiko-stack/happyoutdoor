@@ -534,13 +534,64 @@
   .motion-enter {
     animation: motionEnter var(--motion-enter) var(--ease-out) both;
   }
+  .motion-toggle-track {
+    transition: background-color var(--motion-base) var(--ease-out);
+  }
+  .motion-toggle-thumb {
+    transition: transform var(--motion-base) var(--ease-out);
+    will-change: transform;
+  }
+  .segment-toggle {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--segment-count), minmax(0, 1fr));
+    align-items: center;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background-color: color-mix(in srgb, var(--muted) 40%, transparent);
+    padding: 2px;
+  }
+  .segment-toggle-indicator {
+    position: absolute;
+    top: 2px;
+    bottom: 2px;
+    left: 2px;
+    z-index: 0;
+    width: calc((100% - 4px) / var(--segment-count));
+    border-radius: calc(0.5rem - 2px);
+    background-color: var(--primary);
+    transition: transform var(--motion-base) var(--ease-out);
+    will-change: transform;
+  }
+  .segment-toggle-item {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.375rem;
+    border-radius: calc(0.5rem - 2px);
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    line-height: 1;
+    color: var(--muted-foreground);
+    transition: color var(--motion-base) var(--ease-out);
+  }
+  .segment-toggle-item-active {
+    color: var(--primary-foreground);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .motion-interactive,
   .motion-surface,
   .motion-fade,
-  .motion-label {
+  .motion-label,
+  .motion-toggle-track,
+  .motion-toggle-thumb,
+  .segment-toggle-indicator,
+  .segment-toggle-item {
     transition: none !important;
   }
   .motion-interactive:active {

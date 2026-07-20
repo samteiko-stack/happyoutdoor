@@ -6,6 +6,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { SegmentToggle } from "@/components/ui/segment-toggle";
 import { cn } from "@/lib/utils";
 import { getHomeHref } from "@/components/layout/app-nav-config";
 import { getDesignLinksHref, getDesignUnlockHref } from "@/lib/design-unlock";
@@ -104,30 +105,24 @@ export function DesignerHeader({
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
-        <div className="designer-view-toggle hidden sm:flex" role="group" aria-label="View mode">
-          <button
-            type="button"
-            onClick={() => onViewModeChange("perspective")}
-            className={cn(
-              "designer-view-toggle-item",
-              viewMode === "perspective" && "designer-view-toggle-item-active"
-            )}
-          >
-            <Box className="size-3.5" strokeWidth={1.75} />
-            3D
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewModeChange("topView")}
-            className={cn(
-              "designer-view-toggle-item",
-              viewMode === "topView" && "designer-view-toggle-item-active"
-            )}
-          >
-            <LayoutGrid className="size-3.5" strokeWidth={1.75} />
-            Plan
-          </button>
-        </div>
+        <SegmentToggle
+          className="hidden sm:grid"
+          aria-label="View mode"
+          value={viewMode}
+          onValueChange={onViewModeChange}
+          options={[
+            {
+              value: "perspective",
+              label: "3D",
+              icon: <Box className="size-3.5" strokeWidth={1.75} />,
+            },
+            {
+              value: "topView",
+              label: "Plan",
+              icon: <LayoutGrid className="size-3.5" strokeWidth={1.75} />,
+            },
+          ]}
+        />
 
         <div className="hidden h-6 w-px bg-border sm:block" aria-hidden />
 

@@ -14,7 +14,7 @@ import {
 import { useDesignerStore } from "@/lib/designer-store";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { SegmentToggle } from "@/components/ui/segment-toggle";
 
 export function ToolBar() {
   const {
@@ -87,32 +87,25 @@ export function ToolBar() {
         </Button>
       </div>
 
-      <div className="designer-view-toggle" role="group" aria-label="Time of day">
-        <button
-          type="button"
-          onClick={() => setTimeOfDay("day")}
-          data-demo="toolbar-day"
-          className={cn(
-            "designer-view-toggle-item",
-            timeOfDay === "day" && "designer-view-toggle-item-active"
-          )}
-        >
-          <Sun className="size-3.5" strokeWidth={1.75} />
-          Day
-        </button>
-        <button
-          type="button"
-          onClick={() => setTimeOfDay("night")}
-          data-demo="toolbar-night"
-          className={cn(
-            "designer-view-toggle-item",
-            timeOfDay === "night" && "designer-view-toggle-item-active"
-          )}
-        >
-          <Moon className="size-3.5" strokeWidth={1.75} />
-          Night
-        </button>
-      </div>
+      <SegmentToggle
+        aria-label="Time of day"
+        value={timeOfDay}
+        onValueChange={setTimeOfDay}
+        options={[
+          {
+            value: "day",
+            label: "Day",
+            icon: <Sun className="size-3.5" strokeWidth={1.75} />,
+            demoId: "toolbar-day",
+          },
+          {
+            value: "night",
+            label: "Night",
+            icon: <Moon className="size-3.5" strokeWidth={1.75} />,
+            demoId: "toolbar-night",
+          },
+        ]}
+      />
 
       <div className="designer-toolbar-dimensions">
         <div className="flex items-center gap-2">
