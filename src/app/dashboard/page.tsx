@@ -7,7 +7,11 @@ import { DashboardBanner } from "@/components/dashboard/dashboard-banner";
 import { DashboardStarters } from "@/components/dashboard/dashboard-starters";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { ScrollRail } from "@/components/ui/scroll-rail";
-import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
+import { DashboardContinue } from "@/components/dashboard/dashboard-continue";
+import {
+  DesignPreviewCard,
+  getDesignItemCount,
+} from "@/components/dashboard/design-preview-card";
 import { TemplateCard } from "@/components/dashboard/template-card";
 
 export const dynamic = "force-dynamic";
@@ -55,6 +59,19 @@ export default async function DashboardPage() {
             name={firstName}
             hasDesigns={hasDesigns}
           />
+
+          {hasDesigns && (
+            <DashboardContinue
+              id={designs[0].id}
+              name={designs[0].name}
+              balconyWidthCm={designs[0].balconyWidthCm}
+              balconyHeightCm={designs[0].balconyHeightCm}
+              updatedAt={designs[0].updatedAt}
+              isPaid={designs[0].isPaid}
+              thumbnailUrl={designs[0].thumbnailUrl}
+              itemCount={getDesignItemCount(designs[0].layoutData)}
+            />
+          )}
 
           {hasDesigns && (
             <DashboardSection title="Designs" href="/designs">

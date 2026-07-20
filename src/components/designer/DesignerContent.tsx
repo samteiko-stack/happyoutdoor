@@ -32,6 +32,7 @@ export function DesignerContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
+  const [isPaid, setIsPaid] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [cleanVersion, setCleanVersion] = useState(0);
@@ -176,6 +177,7 @@ export function DesignerContent() {
       setIsReady(false);
       setItems([]);
       setDesignId(null);
+      setIsPaid(false);
       setSourceTemplateId(null);
       setDesignName("My Balcony Design");
 
@@ -198,6 +200,7 @@ export function DesignerContent() {
           if (cancelled) return;
           if (design.id) {
             setDesignId(design.id);
+            setIsPaid(Boolean(design.isPaid));
             setSourceTemplateId(design.templateId ?? null);
             setDesignName(design.name);
             setBalconySize(design.balconyWidthCm, design.balconyHeightCm);
@@ -373,6 +376,7 @@ export function DesignerContent() {
       if (res.ok) {
         const design = await res.json();
         setDesignId(design.id);
+        setIsPaid(Boolean(design.isPaid));
         setSourceTemplateId(design.templateId ?? sourceTemplateId ?? null);
         window.history.replaceState(null, "", `/designer?id=${design.id}`);
         toast.success("Design created");
@@ -427,6 +431,8 @@ export function DesignerContent() {
 
       <DesignerHeader
         designName={designName}
+        designId={designId}
+        isPaid={isPaid}
         onDesignNameChange={setDesignName}
         viewMode={viewMode}
         onViewModeChange={setViewMode}

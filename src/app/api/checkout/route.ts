@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         userId: session.user.id,
       },
       success_url: `${getAppUrl()}/designs/${designId}/links?success=true`,
-      cancel_url: `${getAppUrl()}/designs/${designId}?canceled=true`,
+      cancel_url: `${getAppUrl()}/designs/${designId}/unlock?canceled=true`,
     });
 
     await admin.from("payments").insert({

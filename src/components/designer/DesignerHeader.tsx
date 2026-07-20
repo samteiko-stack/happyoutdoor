@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { getHomeHref } from "@/components/layout/app-nav-config";
+import { getDesignLinksHref, getDesignUnlockHref } from "@/lib/design-unlock";
 import {
   ArrowLeft,
   Box,
@@ -19,6 +20,8 @@ import type { ViewMode } from "@/lib/designer-store";
 
 interface DesignerHeaderProps {
   designName: string;
+  designId?: string | null;
+  isPaid?: boolean;
   onDesignNameChange: (name: string) => void;
   viewMode: ViewMode;
   onViewModeChange: (mode: ViewMode) => void;
@@ -32,6 +35,8 @@ interface DesignerHeaderProps {
 
 export function DesignerHeader({
   designName,
+  designId,
+  isPaid = false,
   onDesignNameChange,
   viewMode,
   onViewModeChange,
@@ -125,6 +130,19 @@ export function DesignerHeader({
         </div>
 
         <div className="hidden h-6 w-px bg-border sm:block" aria-hidden />
+
+        {designId && (
+          <Button
+            type="button"
+            variant="outline"
+            className="hidden sm:inline-flex"
+            onClick={() =>
+              onNavigate(isPaid ? getDesignLinksHref(designId) : getDesignUnlockHref(designId))
+            }
+          >
+            {isPaid ? "Links" : "Unlock links"}
+          </Button>
+        )}
 
         <Button
           onClick={onSave}

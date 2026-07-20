@@ -1,11 +1,14 @@
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { use, useEffect, useState } from "react";
 import Link from "next/link";
+import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AppLayout, AppPage, AppPageHeader, LoadingState } from "@/components/layout";
+import { Card, CardContent } from "@/components/ui/card";
+import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
+import { DashboardSection } from "@/components/dashboard/dashboard-section";
+import { getDesignUnlockHref } from "@/lib/design-unlock";
 
 interface CanvasItem {
   id: string;
@@ -72,17 +75,24 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
     return (
       <AppLayout>
         <AppPage>
-          <Card>
-            <CardHeader>
-              <CardTitle>Links not unlocked</CardTitle>
-              <CardDescription>Unlock this design to view product links.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Link href={`/designs/${design.id}`}>
-                <Button className="w-full">View design</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <PageStack>
+            <Card className="motion-enter">
+              <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <Badge variant="draft" className="mb-3">
+                    Draft
+                  </Badge>
+                  <h2 className="text-heading-2">{design.name}</h2>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Unlock this design to view shopping links.
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link href={getDesignUnlockHref(design.id)}>Unlock links</Link>
+                </Button>
+              </CardContent>
+            </Card>
+          </PageStack>
         </AppPage>
       </AppLayout>
     );
@@ -101,56 +111,65 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
   return (
     <AppLayout>
       <AppPage>
-        <AppPageHeader title="Shopping links" meta={design.name} />
-
-        <div className="space-y-3">
-          {usedProducts.map((product) => (
-            <Card key={product.id}>
-              <CardContent className="flex items-center justify-between gap-4 py-4">
-                <div className="flex min-w-0 items-center gap-4">
-                  {product.imageUrl ? (
-                    <img
-                      src={product.imageUrl}
-                      alt={product.name}
-                      className="size-14 shrink-0 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-                      —
+        <PageStack>
+          <DashboardSection title={design.name} flat>
+            <div className="space-y-3">
+              {usedProducts.map((product) => (
+                <Card key={product.id}>
+                  <CardContent className="flex items-center justify-between gap-4 py-4">
+                    <div className="flex min-w-0 items-center gap-4">
+                      {product.imageUrl ? (
+                        <img
+                          src={product.imageUrl}
+                          alt={product.name}
+                          className="size-14 shrink-0 rounded-lg object-cover"
+                        />
+                      ) : (
+                        <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          —
+                        </div>
+                      )}
+                      <div className="min-w-0">
+                        <p className="font-medium text-foreground">{product.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {product.category.name}
+                        </p>
+                      </div>
                     </div>
-                  )}
-                  <div className="min-w-0">
-                    <p className="font-medium">{product.name}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {product.category.name}
-                    </p>
-                  </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                  <Badge variant="secondary">×{product.count}</Badge>
-                  {product.affiliateLink ? (
-                    <a href={product.affiliateLink} target="_blank" rel="noopener noreferrer">
-                      <Button size="sm">Shop</Button>
-                    </a>
-                  ) : (
-                    <Button size="sm" variant="outline" disabled>
-                      Unavailable
-                    </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
+                    <div className="flex shrink-0 items-center gap-2">
+                      <Badge variant="secondary">×{product.count}</Badge>
+                      {product.affiliateLink ? (
+                        <a
+                          href={product.affiliateLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Button size="sm">
+                            Shop
+                            <ExternalLink className="size-3.5" />
+                          </Button>
+                        </a>
+                      ) : (
+                        <Button size="sm" variant="outline" disabled>
+                          Unavailable
+                        </Button>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </DashboardSection>
 
-        <div className="button-group mt-8">
-          <Link href={`/designer?id=${design.id}`}>
-            <Button variant="outline">Edit design</Button>
-          </Link>
-          <Link href="/designs">
-            <Button variant="outline">All designs</Button>
-          </Link>
-        </div>
+          <div className="button-group">
+            <Button asChild variant="outline">
+              <Link href={`/designer?id=${design.id}`}>Edit design</Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/designs">All designs</Link>
+            </Button>
+          </div>
+        </PageStack>
       </AppPage>
     </AppLayout>
   );

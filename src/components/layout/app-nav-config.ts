@@ -103,6 +103,9 @@ export type PageMeta = {
 export function getPageMeta(pathname: string): PageMeta {
   if (pathname === "/dashboard") return { title: "Overview" };
   if (pathname === "/designs") return { title: "My designs" };
+  if (pathname.startsWith("/designs/") && pathname.endsWith("/unlock")) {
+    return { title: "Unlock links", section: "My designs" };
+  }
   if (pathname.startsWith("/designs/") && pathname.endsWith("/links")) {
     return { title: "Shopping links", section: "My designs" };
   }

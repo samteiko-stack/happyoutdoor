@@ -4,6 +4,10 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SnapshotThumbnail } from "@/components/dashboard/snapshot-thumbnail";
+import {
+  getDesignLinksHref,
+  getDesignUnlockHref,
+} from "@/lib/design-unlock";
 
 interface DashboardContinueProps {
   id: string;
@@ -75,12 +79,12 @@ export function DashboardContinue({
               </Button>
               {!isPaid && (
                 <Button asChild variant="outline">
-                  <Link href={`/designs/${id}`}>Unlock</Link>
+                  <Link href={getDesignUnlockHref(id)}>Unlock links</Link>
                 </Button>
               )}
               {isPaid && (
                 <Button asChild variant="outline">
-                  <Link href={`/designs/${id}/links`}>Links</Link>
+                  <Link href={getDesignLinksHref(id)}>Links</Link>
                 </Button>
               )}
             </div>

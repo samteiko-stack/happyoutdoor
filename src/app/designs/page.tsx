@@ -3,10 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { toast } from "sonner";
-import { AppLayout, AppPage, LoadingState } from "@/components/layout";
+import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
 import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
 import { ScrollRail } from "@/components/ui/scroll-rail";
+import {
+  getDesignLinksHref,
+  getDesignUnlockHref,
+} from "@/lib/design-unlock";
 
 interface Design {
   id: string;
@@ -87,17 +91,17 @@ export default function DesignsPage() {
                 <div className="flex items-center gap-3 px-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
                   {design.isPaid ? (
                     <Link
-                      href={`/designs/${design.id}/links`}
+                      href={getDesignLinksHref(design.id)}
                       className="text-xs font-medium text-primary hover:text-brand-moss-dark"
                     >
                       Links
                     </Link>
                   ) : (
                     <Link
-                      href={`/designs/${design.id}`}
+                      href={getDesignUnlockHref(design.id)}
                       className="text-xs font-medium text-primary hover:text-brand-moss-dark"
                     >
-                      Unlock
+                      Unlock links
                     </Link>
                   )}
                   <button

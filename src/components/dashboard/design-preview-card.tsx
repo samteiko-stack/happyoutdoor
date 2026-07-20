@@ -1,7 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { SnapshotThumbnail } from "@/components/dashboard/snapshot-thumbnail";
+import {
+  getDesignLinksHref,
+  getDesignUnlockHref,
+} from "@/lib/design-unlock";
 import { cn } from "@/lib/utils";
 
 interface DesignPreviewCardProps {
@@ -44,41 +50,66 @@ export function DesignPreviewCard({
   });
 
   return (
-    <Link
-      href={`/designer?id=${id}`}
+    <article
       className={cn(
-        "motion-interactive group flex flex-col overflow-hidden rounded-xl border border-border bg-card",
+        "motion-interactive flex flex-col overflow-hidden rounded-xl border border-border bg-card",
         "hover:border-primary/25",
         className
       )}
     >
-      <SnapshotThumbnail
-        src={thumbnailUrl}
-        alt={name}
-        badge={
-          <div className="flex flex-col items-start gap-1.5">
-            {featured ? <Badge variant="neutral">Most recent</Badge> : null}
-            <Badge variant={isPaid ? "unlocked" : "draft"}>
-              {isPaid ? "Unlocked" : "Draft"}
-            </Badge>
-          </div>
-        }
-        fallback={
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
-            <ImageIcon width={20} height={20} className="opacity-50" />
-            <span className="text-sm tabular-nums text-foreground">{itemCount}</span>
-            <span className="text-caption">products</span>
-          </div>
-        }
-      />
+      <Link href={`/designer?id=${id}`} className="group block">
+        <SnapshotThumbnail
+          src={thumbnailUrl}
+          alt={name}
+          badge={
+            <div className="flex flex-col items-start gap-1.5">
+              {featured ? <Badge variant="neutral">Most recent</Badge> : null}
+              <Badge variant={isPaid ? "unlocked" : "draft"}>
+                {isPaid ? "Unlocked" : "Draft"}
+              </Badge>
+            </div>
+          }
+          fallback={
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
+              <ImageIcon width={20} height={20} className="opacity-50" />
+              <span className="text-sm tabular-nums text-foreground">{itemCount}</span>
+              <span className="text-caption">products</span>
+            </div>
+          }
+        />
 
-      <div className="flex flex-1 flex-col gap-1 p-3.5">
-        <h3 className="truncate text-sm font-semibold text-foreground">{name}</h3>
-        <p className="truncate text-caption text-muted-foreground">
-          {balconyWidthCm} × {balconyHeightCm} cm · {formattedDate}
-        </p>
+        <div className="flex flex-1 flex-col gap-1 p-3.5">
+          <h3 className="truncate text-sm font-semibold text-foreground">{name}</h3>
+          <p className="truncate text-caption text-muted-foreground">
+            {balconyWidthCm} × {balconyHeightCm} cm · {formattedDate}
+          </p>
+        </div>
+      </Link>
+
+      <div className="flex items-center gap-3 border-t border-border px-3.5 py-2.5">
+        {isPaid ? (
+          <Link
+            href={getDesignLinksHref(id)}
+            className="text-xs font-medium text-primary hover:text-brand-moss-dark"
+          >
+            Shopping links
+          </Link>
+        ) : (
+          <Link
+            href={getDesignUnlockHref(id)}
+            className="text-xs font-medium text-primary hover:text-brand-moss-dark"
+          >
+            Unlock links
+          </Link>
+        )}
+        <Link
+          href={`/designer?id=${id}`}
+          className="text-xs font-medium text-muted-foreground hover:text-foreground"
+        >
+          Edit
+        </Link>
       </div>
-    </Link>
+    </article>
   );
 }
 
