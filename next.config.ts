@@ -11,9 +11,8 @@ const supabaseHost = (() => {
 })();
 
 const nextConfig: NextConfig = {
-  // Keep build output under node_modules/.cache — `.next/` on Desktop gets wiped by sync/watchers.
-  distDir:
-    process.env.NEXT_DIST_DIR || "node_modules/.cache/next-build",
+  // Dev sets NEXT_DIST_DIR to avoid Desktop sync wiping `.next/`. Production keeps the default `.next` for Vercel.
+  ...(process.env.NEXT_DIST_DIR ? { distDir: process.env.NEXT_DIST_DIR } : {}),
   experimental: {
     optimizePackageImports: ["lucide-react", "radix-ui", "iconoir-react"],
   },
