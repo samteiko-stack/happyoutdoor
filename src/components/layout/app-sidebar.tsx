@@ -16,12 +16,31 @@ const PulseDots = dynamic(
   { ssr: false }
 );
 
+function SidebarNavSkeleton() {
+  return (
+    <div className="space-y-6 px-3 py-5 motion-fade" aria-hidden>
+      {[0, 1].map((section) => (
+        <div key={section} className="space-y-2">
+          <div className="mx-3 h-2.5 w-16 rounded bg-white/10" />
+          <div className="space-y-1">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="mx-1 h-10 rounded-lg bg-white/5" />
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function AppSidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const user = session?.user;
-  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
-
+  const isAdmin =
+    user?.role?.toUpperCase() === "ADMIN" ||
+    (status === "loading" && pathname.startsWith("/admin"));
+  const navReady = status !== "loading";
   const sections = getNavSections(isAdmin);
 
   return (
@@ -34,7 +53,7 @@ export function AppSidebar() {
         </Link>
       </div>
 
-      {!isAdmin && (
+      {!isAdmin && navReady && (
         <div className="px-4">
           <Button
             asChild
@@ -48,35 +67,39 @@ export function AppSidebar() {
         </div>
       )}
 
-      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
-        {sections.map((section) => (
-          <div key={section.label}>
-            <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
-              {section.label}
-            </p>
-            <ul className="space-y-0.5">
-              {section.items.map((item) => {
-                const active = isNavActive(pathname, item.href, item.exact);
-                const Icon = item.icon;
-                return (
-                  <li key={item.href}>
-                    <Link
-                      href={item.href}
-                      className={cn(
-                        "sidebar-nav-item motion-interactive flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium",
-                        active && "sidebar-nav-item-active"
-                      )}
-                    >
-                      <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
-                      {item.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        ))}
-      </nav>
+      {navReady ? (
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+          {sections.map((section) => (
+            <div key={section.label}>
+              <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                {section.label}
+              </p>
+              <ul className="space-y-0.5">
+                {section.items.map((item) => {
+                  const active = isNavActive(pathname, item.href, item.exact);
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          "sidebar-nav-item motion-interactive flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium",
+                          active && "sidebar-nav-item-active"
+                        )}
+                      >
+                        <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
+                        {item.label}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
+        </nav>
+      ) : (
+        <SidebarNavSkeleton />
+      )}
 
       <div className="sidebar-footer mt-auto shrink-0 border-t border-white/10 p-3">
         <UserMenu variant="sidebar" />

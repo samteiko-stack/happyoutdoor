@@ -13,9 +13,23 @@ import {
 
 export function AppMobileNav() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const isAdmin = session?.user?.role?.toUpperCase() === "ADMIN";
+  const { data: session, status } = useSession();
+  const isAdmin =
+    session?.user?.role?.toUpperCase() === "ADMIN" ||
+    (status === "loading" && pathname.startsWith("/admin"));
   const items = getMobileNavItems(isAdmin);
+  const navReady = status !== "loading";
+
+  if (!navReady) {
+    return (
+      <nav
+        className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background md:hidden"
+        aria-hidden
+      >
+        <div className="mx-auto h-[var(--spacing-mobile-nav-height)] max-w-lg animate-pulse bg-muted/30" />
+      </nav>
+    );
+  }
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-background md:hidden">

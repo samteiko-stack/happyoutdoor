@@ -3,6 +3,7 @@ import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { SupabaseProvider } from "@/components/providers/SupabaseProvider";
 import { Toaster } from "@/components/ui/sonner";
+import { getAuthUser } from "@/lib/auth.server";
 
 const plusJakarta = Plus_Jakarta_Sans({
   variable: "--font-plus-jakarta",
@@ -19,15 +20,17 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const initialUser = await getAuthUser();
+
   return (
     <html lang="en">
       <body className={`${plusJakarta.variable} font-sans antialiased`}>
-        <SupabaseProvider>
+        <SupabaseProvider initialUser={initialUser}>
           {children}
           <Toaster
             position="top-center"

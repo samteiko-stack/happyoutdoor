@@ -58,9 +58,15 @@ async function fetchProfile(supabaseUser: User, forceApi = false): Promise<AuthU
   };
 }
 
-export function SupabaseProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
+export function SupabaseProvider({
+  children,
+  initialUser = null,
+}: {
+  children: React.ReactNode;
+  initialUser?: AuthUser | null;
+}) {
+  const [user, setUser] = useState<AuthUser | null>(initialUser);
+  const [loading, setLoading] = useState(false);
 
   const refresh = async () => {
     try {
