@@ -9,6 +9,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -71,7 +72,7 @@ export function DesignUnlockPanel({
   return (
     <div
       className={cn(
-        "motion-enter grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]",
+        "motion-enter grid gap-[var(--spacing-stack)] lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]",
         className
       )}
     >
@@ -81,7 +82,8 @@ export function DesignUnlockPanel({
             <SnapshotThumbnail
               src={thumbnailUrl}
               alt={name}
-              className="w-full shrink-0 sm:w-56 md:w-64"
+              className="w-full shrink-0 border-b border-border sm:w-56 sm:border-b-0 sm:border-r md:w-64"
+              badge={<Badge variant="draft">Draft</Badge>}
               fallback={
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
                   <ImageIcon width={24} height={24} className="opacity-50" />
@@ -91,40 +93,34 @@ export function DesignUnlockPanel({
               }
             />
 
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-4 p-5 sm:p-7">
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-4 px-[var(--spacing-page-x)] py-[var(--spacing-panel-y)] sm:py-6">
               <div>
-                <p className="text-overline">Draft design</p>
-                <h2 className="mt-2 text-heading-2">{name}</h2>
+                <h2 className="text-heading-3">{name}</h2>
                 <p className="mt-1 text-body">
                   {balconyWidthCm} × {balconyHeightCm} cm · {productCount} product
                   {productCount === 1 ? "" : "s"} · {itemCount} placed
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="draft">Draft</Badge>
-                {itemCount > 0 && <Badge variant="neutral">{itemCount} items</Badge>}
-              </div>
-
               {products.length > 0 ? (
-                <ul className="space-y-2 border-t border-border pt-4">
+                <ul className="space-y-0 border-t border-border">
                   {products.map((product) => (
                     <li
                       key={product.id}
-                      className="flex items-center justify-between gap-3 text-sm"
+                      className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium text-foreground">{product.name}</p>
-                        <p className="truncate text-caption text-muted-foreground">
-                          {product.category.name}
+                        <p className="truncate text-nav font-semibold text-foreground">
+                          {product.name}
                         </p>
+                        <p className="truncate text-caption">{product.category.name}</p>
                       </div>
                       <Badge variant="secondary">×{product.count}</Badge>
                     </li>
                   ))}
                 </ul>
               ) : (
-                <p className="text-sm text-muted-foreground">
+                <p className="text-body border-t border-border pt-4">
                   Add products in the designer before unlocking links.
                 </p>
               )}
@@ -134,24 +130,21 @@ export function DesignUnlockPanel({
       </Card>
 
       <Card className="py-0">
-        <CardHeader className="border-b border-border pb-[var(--spacing-panel-y)] pt-[var(--spacing-panel-y)]">
+        <CardHeader className="border-b border-border pt-[var(--spacing-panel-y)]">
           <CardTitle>Unlock links</CardTitle>
           <CardDescription>
-            One-time payment. Affiliate links for every product in this design.
+            One-time payment for every product in this design.
           </CardDescription>
         </CardHeader>
 
         <CardContent className="flex flex-col gap-5 py-[var(--spacing-panel-y)]">
           {canceled && (
-            <p className="motion-fade rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Checkout canceled. You can try again when ready.
+            <p className="motion-fade rounded-lg border border-border bg-muted px-3 py-2 text-body">
+              Checkout canceled.
             </p>
           )}
 
-          <div>
-            <p className="text-label">Price</p>
-            <p className="text-stat mt-2">{price}</p>
-          </div>
+          <p className="text-stat">{price}</p>
 
           <form action={`/api/checkout?designId=${designId}`} method="POST">
             <Button type="submit" className="w-full" size="lg" disabled={productCount === 0}>
@@ -172,19 +165,17 @@ export function DesignUnlockPanel({
             </Button>
           )}
 
-          <p className="text-caption">
-            Secure payment via Stripe. Links stay on this account.
-          </p>
-
-          <div className="button-group border-t border-border pt-5">
-            <Button asChild variant="outline">
-              <Link href={`/designer?id=${designId}`}>Edit design</Link>
-            </Button>
-            <Button asChild variant="ghost">
-              <Link href="/designs">All designs</Link>
-            </Button>
-          </div>
+          <p className="text-caption">Paid once. Links stay on this account.</p>
         </CardContent>
+
+        <CardFooter className="button-group border-t border-border pb-[var(--spacing-panel-y)]">
+          <Button asChild variant="outline">
+            <Link href={`/designer?id=${designId}`}>Edit design</Link>
+          </Button>
+          <Button asChild variant="ghost">
+            <Link href="/designs">All designs</Link>
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );
@@ -200,16 +191,14 @@ export function DesignUnlockedPanel({
   className?: string;
 }) {
   return (
-    <Card className={cn("motion-enter", className)}>
-      <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
+    <Card className={cn("motion-enter py-0", className)}>
+      <CardContent className="flex flex-col gap-5 py-[var(--spacing-panel-y)] sm:flex-row sm:items-center sm:justify-between">
         <div>
           <Badge variant="unlocked" className="mb-3">
             Unlocked
           </Badge>
-          <h2 className="text-heading-2">{name}</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Shopping links are ready for this design.
-          </p>
+          <h2 className="text-heading-3">{name}</h2>
+          <p className="mt-1 text-body">Shopping links are ready.</p>
         </div>
         <div className="button-group shrink-0">
           <Button asChild>
