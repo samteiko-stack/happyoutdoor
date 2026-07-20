@@ -35,7 +35,7 @@ export function SizeStarterCard({
           }}
         />
         <div className="absolute left-2.5 top-2.5">
-          <Badge variant="neutral">Size</Badge>
+          <Badge variant="clay">Size</Badge>
         </div>
       </div>
       <div className="flex flex-1 flex-col gap-1 p-3.5">

@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { CategoryBadge } from "@/components/ui/category-badge";
 import { toast } from "sonner";
 import { ArrowUp, ArrowDown } from "lucide-react";
 import { PageStack } from "@/components/layout";
@@ -369,7 +370,10 @@ export function ProductsPageClient({
             </TableCell>
             <TableCell>
               {product.category ? (
-                <Badge variant="secondary">{product.category.name}</Badge>
+                <CategoryBadge
+                  name={product.category.name}
+                  slug={product.category.slug}
+                />
               ) : (
                 <span className="text-muted-foreground">—</span>
               )}

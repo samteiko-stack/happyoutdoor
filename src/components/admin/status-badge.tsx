@@ -19,13 +19,13 @@ interface StatusBadgeProps {
 
 const statusConfig: Record<
   StatusVariant,
-  { variant: "default" | "secondary" | "outline" | "draft" | "unlocked" | "neutral"; label: string }
+  { variant: "default" | "secondary" | "outline" | "draft" | "unlocked" | "neutral" | "sage" | "warm" | "gold" | "fern" | "clay"; label: string }
 > = {
   draft: { variant: "draft", label: "Draft" },
   paid: { variant: "default", label: "Paid" },
   unlocked: { variant: "unlocked", label: "Unlocked" },
-  published: { variant: "default", label: "Published" },
-  unpublished: { variant: "secondary", label: "Unpublished" },
+  published: { variant: "fern", label: "Published" },
+  unpublished: { variant: "draft", label: "Unpublished" },
   admin: { variant: "default", label: "Admin" },
   user: { variant: "secondary", label: "User" },
   neutral: { variant: "neutral", label: "Neutral" },

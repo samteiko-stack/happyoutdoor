@@ -1,11 +1,12 @@
 import Link from "next/link";
-import { Badge } from "@/components/ui/badge";
+import { CategoryBadge } from "@/components/ui/category-badge";
 import { ProductThumbnail } from "@/components/admin/product-thumbnail";
 import { cn } from "@/lib/utils";
 
 interface AdminProductCardProps {
   name: string;
   categoryName?: string | null;
+  categorySlug?: string | null;
   imageUrl?: string | null;
   topViewImageUrl?: string | null;
   widthCm: number;
@@ -16,6 +17,7 @@ interface AdminProductCardProps {
 export function AdminProductCard({
   name,
   categoryName,
+  categorySlug,
   imageUrl,
   topViewImageUrl,
   widthCm,
@@ -41,9 +43,7 @@ export function AdminProductCard({
       </div>
       <div className="flex flex-1 flex-col gap-2 p-3.5">
         {categoryName ? (
-          <Badge variant="secondary" className="w-fit">
-            {categoryName}
-          </Badge>
+          <CategoryBadge name={categoryName} slug={categorySlug} className="w-fit" />
         ) : null}
         <h3 className="truncate text-sm font-semibold text-foreground">{name}</h3>
         <p className="text-caption text-muted-foreground">

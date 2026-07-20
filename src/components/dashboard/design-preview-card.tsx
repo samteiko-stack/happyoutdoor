@@ -56,7 +56,7 @@ export function DesignPreviewCard({
           alt={name}
           badge={
             <div className="flex flex-col items-start gap-1.5">
-              {featured ? <Badge variant="neutral">Most recent</Badge> : null}
+              {featured ? <Badge variant="gold">Most recent</Badge> : null}
               <Badge variant={isPaid ? "unlocked" : "draft"}>
                 {isPaid ? "Unlocked" : "Draft"}
               </Badge>

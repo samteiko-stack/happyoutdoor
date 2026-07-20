@@ -107,6 +107,7 @@ export default async function AdminOverviewPage() {
                 key={product.id}
                 name={product.name}
                 categoryName={product.category?.name}
+                categorySlug={product.category?.slug}
                 imageUrl={product.imageUrl}
                 topViewImageUrl={product.topViewImageUrl}
                 widthCm={product.widthCm}

@@ -5,7 +5,7 @@ import { Slot } from "radix-ui"
 import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
-  "inline-flex items-center justify-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive transition-[color,box-shadow] overflow-hidden",
+  "motion-interactive inline-flex items-center justify-center rounded-md border border-transparent px-2.5 py-0.5 text-xs font-medium w-fit whitespace-nowrap shrink-0 [&>svg]:size-3 gap-1 [&>svg]:pointer-events-none focus-visible:border-ring focus-visible:ring-ring/50 focus-visible:ring-[3px] aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive overflow-hidden",
   {
     variants: {
       variant: {
@@ -18,9 +18,16 @@ const badgeVariants = cva(
           "border-border text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         ghost: "[a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
         link: "text-primary underline-offset-4 [a&]:hover:underline",
-        draft: "border border-border bg-muted text-muted-foreground [a&]:hover:bg-muted/80",
-        unlocked: "border border-border bg-muted text-foreground [a&]:hover:bg-muted/80",
+        draft:
+          "bg-[var(--tag-draft-bg)] text-[var(--tag-draft-fg)] [a&]:hover:opacity-90",
+        unlocked:
+          "bg-[var(--tag-unlocked-bg)] text-[var(--tag-unlocked-fg)] [a&]:hover:opacity-90",
         neutral: "bg-muted text-muted-foreground [a&]:hover:bg-muted/80",
+        sage: "bg-[var(--tag-sage-bg)] text-[var(--tag-sage-fg)] [a&]:hover:opacity-90",
+        warm: "bg-[var(--tag-warm-bg)] text-[var(--tag-warm-fg)] [a&]:hover:opacity-90",
+        gold: "bg-[var(--tag-gold-bg)] text-[var(--tag-gold-fg)] [a&]:hover:opacity-90",
+        fern: "bg-[var(--tag-fern-bg)] text-[var(--tag-fern-fg)] [a&]:hover:opacity-90",
+        clay: "bg-[var(--tag-clay-bg)] text-[var(--tag-clay-fg)] [a&]:hover:opacity-90",
       },
     },
     defaultVariants: {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { CategoryBadge } from "@/components/ui/category-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
@@ -22,7 +23,7 @@ interface Product {
   description: string | null;
   affiliateLink: string | null;
   imageUrl: string | null;
-  category: { name: string };
+  category: { name: string; slug?: string };
 }
 
 interface Design {
@@ -145,9 +146,11 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
                       )}
                       <div className="min-w-0">
                         <p className="font-medium text-foreground">{product.name}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {product.category.name}
-                        </p>
+                        <CategoryBadge
+                          name={product.category.name}
+                          slug={product.category.slug}
+                          className="mt-1"
+                        />
                       </div>
                     </div>
                     <div className="flex shrink-0 items-center gap-2">

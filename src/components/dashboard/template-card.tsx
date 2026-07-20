@@ -33,7 +33,7 @@ export function TemplateCard({
       <SnapshotThumbnail
         src={thumbnailUrl}
         alt={name}
-        badge={<Badge variant="neutral">Template</Badge>}
+        badge={<Badge variant="sage">Template</Badge>}
         fallback={
           <div className="absolute inset-0 flex items-center justify-center">
             <ImageIcon width={20} height={20} className="text-muted-foreground/50" />

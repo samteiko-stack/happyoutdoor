@@ -66,7 +66,7 @@ export function DashboardContinue({
                 {isPaid ? "Unlocked" : "Draft"}
               </Badge>
               {itemCount > 0 && (
-                <Badge variant="neutral">{itemCount} products</Badge>
+                <Badge variant="sage">{itemCount} products</Badge>
               )}
             </div>
 

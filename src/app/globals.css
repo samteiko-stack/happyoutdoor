@@ -124,6 +124,22 @@
   --color-charcoal: #333333;
   --color-red: #DC2626;
 
+  /* ── Tag tints (muted chips) ── */
+  --tag-draft-bg: #F5EDE0;
+  --tag-draft-fg: #6B5A42;
+  --tag-unlocked-bg: var(--color-moss-muted);
+  --tag-unlocked-fg: var(--color-moss-dark);
+  --tag-sage-bg: #E8EDE3;
+  --tag-sage-fg: var(--color-moss-green);
+  --tag-warm-bg: #F3EBE4;
+  --tag-warm-fg: #7A5C45;
+  --tag-gold-bg: #F5EFDF;
+  --tag-gold-fg: #7A6528;
+  --tag-fern-bg: #E5EDE6;
+  --tag-fern-fg: #3D5C42;
+  --tag-clay-bg: #EDE4DC;
+  --tag-clay-fg: #6E5344;
+
   /* ── Semantic tokens ── */
   --radius: 0.375rem;
   --background: var(--color-white);

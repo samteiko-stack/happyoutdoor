@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, ExternalLink, ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { CategoryBadge } from "@/components/ui/category-badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { SnapshotThumbnail } from "@/components/dashboard/snapshot-thumbnail";
@@ -13,7 +14,7 @@ import { cn } from "@/lib/utils";
 type UnlockProduct = {
   id: string;
   name: string;
-  category: { name: string };
+  category: { name: string; slug?: string };
   count: number;
 };
 
@@ -83,7 +84,7 @@ export function DesignUnlockPanel({
             <div className="flex flex-wrap items-center gap-2">
               <Badge variant="draft">Draft</Badge>
               {itemCount > 0 && (
-                <Badge variant="neutral">{itemCount} placed</Badge>
+                <Badge variant="sage">{itemCount} placed</Badge>
               )}
             </div>
             <div>
@@ -105,12 +106,16 @@ export function DesignUnlockPanel({
                     key={product.id}
                     className="flex items-center justify-between gap-3 border-b border-border py-3 last:border-b-0"
                   >
-                    <div className="min-w-0">
-                      <p className="truncate text-nav font-semibold text-foreground">
-                        {product.name}
-                      </p>
-                      <p className="truncate text-caption">{product.category.name}</p>
-                    </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-nav font-semibold text-foreground">
+                          {product.name}
+                        </p>
+                        <CategoryBadge
+                          name={product.category.name}
+                          slug={product.category.slug}
+                          className="mt-1"
+                        />
+                      </div>
                     <Badge variant="secondary">×{product.count}</Badge>
                   </li>
                 ))}

@@ -37,7 +37,7 @@ export function AdminTemplateCard({
           src={thumbnailUrl}
           alt={name}
           badge={
-            <Badge variant={isPublished ? "unlocked" : "draft"}>
+            <Badge variant={isPublished ? "fern" : "draft"}>
               {isPublished ? "Published" : "Draft"}
             </Badge>
           }
