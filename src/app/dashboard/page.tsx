@@ -8,10 +8,8 @@ import { DashboardStarters } from "@/components/dashboard/dashboard-starters";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { ScrollRail } from "@/components/ui/scroll-rail";
 import { DashboardContinue } from "@/components/dashboard/dashboard-continue";
-import {
-  DesignPreviewCard,
-  getDesignItemCount,
-} from "@/components/dashboard/design-preview-card";
+import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
+import { getDesignProductSummary } from "@/lib/design-unlock";
 import { TemplateCard } from "@/components/dashboard/template-card";
 
 export const dynamic = "force-dynamic";
@@ -69,7 +67,7 @@ export default async function DashboardPage() {
               updatedAt={designs[0].updatedAt}
               isPaid={designs[0].isPaid}
               thumbnailUrl={designs[0].thumbnailUrl}
-              itemCount={getDesignItemCount(designs[0].layoutData)}
+              itemCount={getDesignProductSummary(designs[0].layoutData).itemCount}
             />
           )}
 

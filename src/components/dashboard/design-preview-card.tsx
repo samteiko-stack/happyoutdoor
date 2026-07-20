@@ -7,6 +7,7 @@ import { SnapshotThumbnail } from "@/components/dashboard/snapshot-thumbnail";
 import {
   getDesignLinksHref,
   getDesignUnlockHref,
+  getDesignProductSummary,
 } from "@/lib/design-unlock";
 import { cn } from "@/lib/utils";
 
@@ -24,11 +25,7 @@ interface DesignPreviewCardProps {
 }
 
 function getItemCount(layoutData: string) {
-  try {
-    return JSON.parse(layoutData).length;
-  } catch {
-    return 0;
-  }
+  return getDesignProductSummary(layoutData).itemCount;
 }
 
 export function DesignPreviewCard({
@@ -43,7 +40,7 @@ export function DesignPreviewCard({
   featured = false,
   className,
 }: DesignPreviewCardProps) {
-  const itemCount = getItemCount(layoutData);
+  const itemCount = getDesignProductSummary(layoutData).itemCount;
   const formattedDate = new Date(updatedAt).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
