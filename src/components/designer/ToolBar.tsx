@@ -1,10 +1,20 @@
 "use client";
 
-import { Undo, Redo, RotateCameraLeft, RotateCameraRight, Trash, Minus, Plus, SunLight, HalfMoon } from "iconoir-react";
+import {
+  Undo2,
+  Redo2,
+  RotateCcw,
+  RotateCw,
+  Trash2,
+  Minus,
+  Plus,
+  Sun,
+  Moon,
+} from "lucide-react";
 import { useDesignerStore } from "@/lib/designer-store";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 export function ToolBar() {
   const {
@@ -16,7 +26,6 @@ export function ToolBar() {
     historyIndex,
     history,
     items,
-    products,
     balconyWidthCm,
     balconyHeightCm,
     setBalconySize,
@@ -24,136 +33,157 @@ export function ToolBar() {
     setTimeOfDay,
   } = useDesignerStore();
 
-  // Calculate total price
-  const totalPrice = items.reduce((sum, item) => {
-    const product = products.find((p) => p.id === item.productId);
-    return sum + (product?.price || 0);
-  }, 0);
-
   return (
-    <div className="flex items-center gap-1 bg-white border-b px-4 py-2 shadow-sm">
-      {/* Undo/Redo */}
-      <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex < 0} title="Undo">
-        <Undo width={16} height={16} />
-        <span className="ml-1 text-xs">Undo</span>
-      </Button>
-      <Button variant="ghost" size="sm" onClick={redo} disabled={historyIndex >= history.length - 1} title="Redo">
-        <Redo width={16} height={16} />
-        <span className="ml-1 text-xs">Redo</span>
-      </Button>
+    <div className="designer-toolbar">
+      <div className="designer-toolbar-group">
+        <Button variant="ghost" size="sm" onClick={undo} disabled={historyIndex < 0} title="Undo">
+          <Undo2 className="size-4" strokeWidth={1.75} />
+          <span className="ml-1 text-xs">Undo</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={redo}
+          disabled={historyIndex >= history.length - 1}
+          title="Redo"
+        >
+          <Redo2 className="size-4" strokeWidth={1.75} />
+          <span className="ml-1 text-xs">Redo</span>
+        </Button>
+      </div>
 
-      <Separator orientation="vertical" className="mx-2 h-6" />
+      <div className="designer-toolbar-group">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => rotateSelected(-45)}
+          disabled={!selectedItemId}
+          title="Rotate left"
+          data-demo="toolbar-rotate-ccw"
+        >
+          <RotateCcw className="size-4" strokeWidth={1.75} />
+          <span className="ml-1 text-xs">-45°</span>
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => rotateSelected(45)}
+          disabled={!selectedItemId}
+          title="Rotate right"
+          data-demo="toolbar-rotate-cw"
+        >
+          <RotateCw className="size-4" strokeWidth={1.75} />
+          <span className="ml-1 text-xs">+45°</span>
+        </Button>
+        <Button
+          variant="ghost-destructive"
+          size="sm"
+          onClick={() => selectedItemId && deleteItem(selectedItemId)}
+          disabled={!selectedItemId}
+          title="Delete selected"
+        >
+          <Trash2 className="size-4" strokeWidth={1.75} />
+          <span className="ml-1 text-xs">Delete</span>
+        </Button>
+      </div>
 
-      {/* Item actions */}
-      <Button variant="ghost" size="sm" onClick={() => rotateSelected(-45)} disabled={!selectedItemId} title="Rotate left">
-        <RotateCameraLeft width={16} height={16} />
-        <span className="ml-1 text-xs">-45&deg;</span>
-      </Button>
-      <Button variant="ghost" size="sm" onClick={() => rotateSelected(45)} disabled={!selectedItemId} title="Rotate right">
-        <RotateCameraRight width={16} height={16} />
-        <span className="ml-1 text-xs">+45&deg;</span>
-      </Button>
-      <Button
-        variant="ghost"
-        size="sm"
-        onClick={() => selectedItemId && deleteItem(selectedItemId)}
-        disabled={!selectedItemId}
-        title="Delete selected"
-        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-      >
-        <Trash width={16} height={16} />
-        <span className="ml-1 text-xs">Delete</span>
-      </Button>
+      <div className="designer-view-toggle" role="group" aria-label="Time of day">
+        <button
+          type="button"
+          onClick={() => setTimeOfDay("day")}
+          data-demo="toolbar-day"
+          className={cn(
+            "designer-view-toggle-item",
+            timeOfDay === "day" && "designer-view-toggle-item-active"
+          )}
+        >
+          <Sun className="size-3.5" strokeWidth={1.75} />
+          Day
+        </button>
+        <button
+          type="button"
+          onClick={() => setTimeOfDay("night")}
+          data-demo="toolbar-night"
+          className={cn(
+            "designer-view-toggle-item",
+            timeOfDay === "night" && "designer-view-toggle-item-active"
+          )}
+        >
+          <Moon className="size-3.5" strokeWidth={1.75} />
+          Night
+        </button>
+      </div>
 
-      <Separator orientation="vertical" className="mx-2 h-6" />
-
-      {/* Day/Night Toggle */}
-      <Button
-        variant={timeOfDay === 'day' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => setTimeOfDay('day')}
-        title="Day mode"
-        className={timeOfDay === 'day' ? 'bg-primary' : ''}
-      >
-        <SunLight width={16} height={16} />
-        <span className="ml-1 text-xs">Day</span>
-      </Button>
-      <Button
-        variant={timeOfDay === 'night' ? 'default' : 'ghost'}
-        size="sm"
-        onClick={() => setTimeOfDay('night')}
-        title="Night mode"
-        className={timeOfDay === 'night' ? 'bg-primary' : ''}
-      >
-        <HalfMoon width={16} height={16} />
-        <span className="ml-1 text-xs">Night</span>
-      </Button>
-
-      <Separator orientation="vertical" className="mx-2 h-6" />
-
-      {/* Balcony Size Controls - Modern Arrow Buttons */}
-      <div className="flex items-center gap-3 bg-muted/30 rounded px-3 py-1.5">
+      <div className="designer-toolbar-dimensions">
         <div className="flex items-center gap-2">
-          <Label className="text-xs font-medium text-muted-foreground">Width</Label>
+          <Label className="text-xs font-medium text-foreground">Width</Label>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBalconySize(Math.max(150, balconyWidthCm - 50), balconyHeightCm)}
+              onClick={() =>
+                setBalconySize(Math.max(150, balconyWidthCm - 50), balconyHeightCm)
+              }
               disabled={balconyWidthCm <= 150}
-              className="h-7 w-7 p-0 hover:bg-accent/10"
+              className="size-7 p-0"
             >
-              <Minus width={14} height={14} />
+              <Minus className="size-3.5" strokeWidth={2} />
             </Button>
-            <span className="text-sm font-semibold text-foreground w-14 text-center">{balconyWidthCm}cm</span>
+            <span className="w-14 text-center text-sm font-semibold tabular-nums text-foreground">
+              {balconyWidthCm}cm
+            </span>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBalconySize(Math.min(600, balconyWidthCm + 50), balconyHeightCm)}
+              onClick={() =>
+                setBalconySize(Math.min(600, balconyWidthCm + 50), balconyHeightCm)
+              }
               disabled={balconyWidthCm >= 600}
-              className="h-7 w-7 p-0 hover:bg-accent/10"
+              className="size-7 p-0"
             >
-              <Plus width={14} height={14} />
+              <Plus className="size-3.5" strokeWidth={2} />
             </Button>
           </div>
         </div>
-        
-        <Separator orientation="vertical" className="h-6" />
-        
+
+        <div className="h-6 w-px bg-border" aria-hidden />
+
         <div className="flex items-center gap-2">
-          <Label className="text-xs font-medium text-muted-foreground">Depth</Label>
+          <Label className="text-xs font-medium text-foreground">Depth</Label>
           <div className="flex items-center gap-1">
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBalconySize(balconyWidthCm, Math.max(100, balconyHeightCm - 50))}
+              onClick={() =>
+                setBalconySize(balconyWidthCm, Math.max(100, balconyHeightCm - 50))
+              }
               disabled={balconyHeightCm <= 100}
-              className="h-7 w-7 p-0 hover:bg-accent/10"
+              className="size-7 p-0"
             >
-              <Minus width={14} height={14} />
+              <Minus className="size-3.5" strokeWidth={2} />
             </Button>
-            <span className="text-sm font-semibold text-foreground w-14 text-center">{balconyHeightCm}cm</span>
+            <span className="w-14 text-center text-sm font-semibold tabular-nums text-foreground">
+              {balconyHeightCm}cm
+            </span>
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => setBalconySize(balconyWidthCm, Math.min(400, balconyHeightCm + 50))}
+              onClick={() =>
+                setBalconySize(balconyWidthCm, Math.min(400, balconyHeightCm + 50))
+              }
               disabled={balconyHeightCm >= 400}
-              className="h-7 w-7 p-0 hover:bg-accent/10"
+              className="size-7 p-0"
             >
-              <Plus width={14} height={14} />
+              <Plus className="size-3.5" strokeWidth={2} />
             </Button>
           </div>
         </div>
       </div>
 
-      {/* Spacer */}
       <div className="flex-1" />
 
-      {/* Stats */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span>{items.length} item{items.length !== 1 ? "s" : ""}</span>
-        <Separator orientation="vertical" className="h-4" />
-        <span className="font-medium text-foreground">${totalPrice.toFixed(2)}</span>
+      <div className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium tabular-nums text-foreground">
+        {items.length} item{items.length !== 1 ? "s" : ""}
       </div>
     </div>
   );

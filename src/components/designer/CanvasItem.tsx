@@ -3,16 +3,10 @@
 import { useState, useEffect } from "react";
 import { Group, Rect, Text, Image as KonvaImage } from "react-konva";
 import { CanvasItem, ProductData } from "@/lib/designer-store";
+import { designerCategoryColors, designerColors } from "@/lib/design-tokens";
 
 // Category colors fallback when no image is available
-const CATEGORY_COLORS: Record<string, string> = {
-  seating: "#7a6b5a",
-  lighting: "#d4a843",
-  plants: "#6b7f3b",
-  planters: "#a67c52",
-  decor: "#b8856c",
-  tables: "#5a6b52",
-};
+const CATEGORY_COLORS = designerCategoryColors;
 
 function useKonvaImage(url: string | null | undefined) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
@@ -39,6 +33,8 @@ interface CanvasItemComponentProps {
   scale: number;
   onSelect: () => void;
   onDragEnd: (x: number, y: number) => void;
+  /** Defaults to true. Set false for locked / demo-limited canvases. */
+  draggable?: boolean;
 }
 
 export function CanvasItemComponent({
@@ -48,10 +44,11 @@ export function CanvasItemComponent({
   scale,
   onSelect,
   onDragEnd,
+  draggable = true,
 }: CanvasItemComponentProps) {
   const width = product.widthCm * scale;
   const height = product.heightCm * scale;
-  const color = CATEGORY_COLORS[product.category?.slug || "decor"] || "#6B7280";
+  const color = CATEGORY_COLORS[product.category?.slug || "decor"] || designerColors.labelMuted;
 
   // Try top-view image first, then fall back to main image
   const topViewImg = useKonvaImage(product.topViewImageUrl);
@@ -64,7 +61,7 @@ export function CanvasItemComponent({
       x={item.x}
       y={item.y}
       rotation={item.rotation}
-      draggable
+      draggable={draggable}
       onClick={(e) => {
         e.cancelBubble = true;
         onSelect();
@@ -90,12 +87,9 @@ export function CanvasItemComponent({
             width={width}
             height={height}
             cornerRadius={6}
-            stroke={isSelected ? "#8fa64a" : "rgba(0,0,0,0.15)"}
+            stroke={isSelected ? designerColors.selection : designerColors.itemStroke}
             strokeWidth={isSelected ? 2.5 : 1}
-            shadowColor={isSelected ? "#8fa64a" : "#000"}
-            shadowBlur={isSelected ? 10 : 4}
-            shadowOpacity={isSelected ? 0.35 : 0.12}
-            fill="#f5f3ed"
+            fill={designerColors.itemFill}
           />
           {/* Product image */}
           <KonvaImage
@@ -112,7 +106,7 @@ export function CanvasItemComponent({
             y={height / 2 - 18}
             width={width}
             height={18}
-            fill="rgba(45,36,24,0.7)"
+            fill={designerColors.itemLabelBg}
             cornerRadius={[0, 0, 6, 6]}
           />
           <Text
@@ -122,7 +116,7 @@ export function CanvasItemComponent({
             height={14}
             text={product.name}
             fontSize={Math.min(10, width / 6)}
-            fill="white"
+            fill={designerColors.white}
             fontStyle="500"
             align="center"
             verticalAlign="middle"
@@ -140,11 +134,8 @@ export function CanvasItemComponent({
             fill={color}
             opacity={0.7}
             cornerRadius={6}
-            stroke={isSelected ? "#8fa64a" : color}
+            stroke={isSelected ? designerColors.selection : color}
             strokeWidth={isSelected ? 2.5 : 1}
-            shadowColor={isSelected ? "#8fa64a" : "#000"}
-            shadowBlur={isSelected ? 10 : 4}
-            shadowOpacity={isSelected ? 0.35 : 0.12}
           />
           <Text
             x={-width / 2 + 4}
@@ -153,7 +144,7 @@ export function CanvasItemComponent({
             height={height - 8}
             text={product.name}
             fontSize={Math.min(11, width / 5)}
-            fill="white"
+            fill={designerColors.white}
             fontStyle="bold"
             align="center"
             verticalAlign="middle"

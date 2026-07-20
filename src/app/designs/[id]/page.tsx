@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { AppShell, AppNav, PageContainer, LoadingState } from "@/components/layout";
+import { AppLayout, AppPage, AppPageHeader, LoadingState } from "@/components/layout";
 
 interface CanvasItem {
   id: string;
@@ -56,11 +56,23 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   }, [id]);
 
   if (loading) {
-    return <LoadingState message="Loading design..." />;
+    return (
+      <AppLayout>
+        <AppPage>
+          <LoadingState message="Loading design…" />
+        </AppPage>
+      </AppLayout>
+    );
   }
 
   if (!design) {
-    return <LoadingState message="Design not found" />;
+    return (
+      <AppLayout>
+        <AppPage>
+          <LoadingState message="Design not found" />
+        </AppPage>
+      </AppLayout>
+    );
   }
 
   const items: CanvasItem[] = JSON.parse(design.layoutData || "[]");
@@ -72,8 +84,6 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
       return product ? { ...product, count } : null;
     })
     .filter(Boolean) as (Product & { count: number })[];
-
-  const totalPrice = usedProducts.reduce((sum, p) => sum + p.price * p.count, 0);
 
   const handlePreviewLinks = async () => {
     setUnlocking(true);
@@ -93,23 +103,14 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
   };
 
   return (
-    <AppShell surface="muted">
-      <AppNav
-        containerSize="sm"
-        blur
-        breadcrumbs={
-          <>
-            <Link href="/designs" className="text-muted-foreground hover:text-foreground">
-              My Designs
-            </Link>
-            <span className="text-nav-divider">/</span>
-            <span className="font-medium text-foreground">{design.name}</span>
-          </>
-        }
-      />
+    <AppLayout>
+      <AppPage>
+        <AppPageHeader
+          title={design.name}
+          meta={`${design.balconyWidthCm} × ${design.balconyHeightCm} cm`}
+        />
 
-      <PageContainer size="sm" className="py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Product list */}
           <div className="lg:col-span-2">
             <Card>
@@ -126,22 +127,12 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-muted-foreground">
-                          {product.category.name} &middot; ${product.price.toFixed(2)} each
+                          {product.category.name}
                         </p>
                       </div>
-                      <div className="text-right">
-                        <Badge variant="secondary">x{product.count}</Badge>
-                        <p className="text-sm font-semibold mt-1">
-                          ${(product.price * product.count).toFixed(2)}
-                        </p>
-                      </div>
+                      <Badge variant="secondary">x{product.count}</Badge>
                     </div>
                   ))}
-                  <Separator />
-                  <div className="flex items-center justify-between font-semibold">
-                    <span>Estimated Total</span>
-                    <span className="text-lg text-primary">${totalPrice.toFixed(2)}</span>
-                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -159,7 +150,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
               <CardContent className="space-y-4">
                 {design.isPaid ? (
                   <>
-                    <div className="bg-secondary/20 text-primary p-4 rounded text-center">
+                    <div className="rounded border border-border bg-muted p-4 text-center text-foreground">
                       <p className="font-semibold">Links Unlocked!</p>
                       <p className="text-sm mt-1">You have access to all product links</p>
                     </div>
@@ -227,7 +218,7 @@ export default function DesignDetailPage({ params }: { params: Promise<{ id: str
             </Card>
           </div>
         </div>
-      </PageContainer>
-    </AppShell>
+      </AppPage>
+    </AppLayout>
   );
 }

@@ -13,6 +13,20 @@ create table if not exists public.profiles (
 
 alter table public.profiles enable row level security;
 
+create or replace function public.is_admin()
+returns boolean
+language sql
+security definer
+set search_path = public
+stable
+as $$
+  select exists (
+    select 1
+    from public.profiles
+    where id = auth.uid() and role = 'ADMIN'
+  );
+$$;
+
 create policy "Users can read own profile"
   on public.profiles for select
   using (auth.uid() = id);
@@ -23,21 +37,11 @@ create policy "Users can update own profile"
 
 create policy "Admins can read all profiles"
   on public.profiles for select
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'ADMIN'
-    )
-  );
+  using (public.is_admin());
 
 create policy "Admins can update all profiles"
   on public.profiles for update
-  using (
-    exists (
-      select 1 from public.profiles
-      where id = auth.uid() and role = 'ADMIN'
-    )
-  );
+  using (public.is_admin());
 
 -- Auto-create profile on signup
 create or replace function public.handle_new_user()
@@ -79,9 +83,7 @@ create policy "Categories are publicly readable"
 
 create policy "Admins manage categories"
   on public.categories for all
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  using (public.is_admin());
 
 -- ── Products ───────────────────────────────────────────────────────────────
 create table if not exists public.products (
@@ -107,9 +109,7 @@ create policy "Products are publicly readable"
 
 create policy "Admins manage products"
   on public.products for all
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  using (public.is_admin());
 
 -- ── Templates ──────────────────────────────────────────────────────────────
 create table if not exists public.templates (
@@ -129,15 +129,11 @@ alter table public.templates enable row level security;
 
 create policy "Published templates are publicly readable"
   on public.templates for select
-  using (is_published = true or exists (
-    select 1 from public.profiles where id = auth.uid() and role = 'ADMIN'
-  ));
+  using (is_published = true or public.is_admin());
 
 create policy "Admins manage templates"
   on public.templates for all
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  using (public.is_admin());
 
 -- ── Designs ────────────────────────────────────────────────────────────────
 create table if not exists public.designs (
@@ -162,9 +158,7 @@ create policy "Users manage own designs"
 
 create policy "Admins read all designs"
   on public.designs for select
-  using (
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  using (public.is_admin());
 
 -- ── Payments ───────────────────────────────────────────────────────────────
 create table if not exists public.payments (
@@ -198,10 +192,7 @@ create policy "Public read models"
 
 create policy "Admins upload models"
   on storage.objects for insert
-  with check (
-    bucket_id = 'models' and
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  with check (bucket_id = 'models' and public.is_admin());
 
 create policy "Public read snapshots"
   on storage.objects for select
@@ -217,10 +208,7 @@ create policy "Public read products"
 
 create policy "Admins upload products"
   on storage.objects for insert
-  with check (
-    bucket_id = 'products' and
-    exists (select 1 from public.profiles where id = auth.uid() and role = 'ADMIN')
-  );
+  with check (bucket_id = 'products' and public.is_admin());
 
 -- ── Updated_at trigger ─────────────────────────────────────────────────────
 create or replace function public.set_updated_at()

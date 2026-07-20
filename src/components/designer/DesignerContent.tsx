@@ -1,57 +1,117 @@
 "use client";
 
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef, useCallback, useMemo } from "react";
 import { useSession } from "@/components/providers/SupabaseProvider";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useDesignerStore } from "@/lib/designer-store";
 import { ProductCatalog } from "@/components/designer/ProductCatalog";
 import { ToolBar } from "@/components/designer/ToolBar";
+import { DesignerHeader } from "@/components/designer/DesignerHeader";
+import { DesignerLeaveDialog } from "@/components/designer/DesignerLeaveDialog";
 import { ScreenSizeWarning } from "@/components/designer/ScreenSizeWarning";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { createDesignSnapshot, isDesignDirty } from "@/lib/designer-snapshot";
+import { isAdmin } from "@/lib/auth-types";
+import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import Link from "next/link";
-import { UserMenu } from "@/components/UserMenu";
-import { EditPencil, FloppyDisk, ViewGrid } from "iconoir-react";
 
 const Canvas = dynamic(
   () => import("@/components/designer/Canvas").then((mod) => ({ default: mod.Canvas })),
-  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center bg-surface-muted">Loading canvas...</div> }
+  { ssr: false, loading: () => <div className="flex flex-1 items-center justify-center bg-designer-canvas-bg">Loading canvas...</div> }
 );
 
 const IsometricScene = dynamic(
   () => import("@/components/designer/IsometricScene").then((mod) => ({ default: mod.IsometricScene })),
-  { ssr: false, loading: () => <div className="flex-1 flex items-center justify-center bg-secondary/20">Loading 3D...</div> }
+  { ssr: false, loading: () => <div className="flex flex-1 items-center justify-center bg-designer-canvas-bg">Loading 3D...</div> }
 );
+
+const BACK_NAV = "__back__";
 
 export function DesignerContent() {
   const { data: session } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [saving, setSaving] = useState(false);
-  const [editingName, setEditingName] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
+  const [cleanVersion, setCleanVersion] = useState(0);
   const snapshotFnRef = useRef<(() => string) | null>(null);
+  const baselineRef = useRef("");
+  const pendingNavRef = useRef<string | null>(null);
 
   const handleSnapshotReady = useCallback((fn: () => string) => {
     snapshotFnRef.current = fn;
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const exposeSnapshot = () => {
+      (
+        window as Window & { __designerSnapshot?: () => string | null }
+      ).__designerSnapshot = () => snapshotFnRef.current?.() ?? null;
+    };
+
+    exposeSnapshot();
+    return () => {
+      delete (window as Window & { __designerSnapshot?: () => string | null })
+        .__designerSnapshot;
+    };
+  }, [isReady]);
+
   async function captureAndUploadSnapshot(): Promise<string | null> {
+    const store = useDesignerStore.getState();
+    const previousView = store.viewMode;
+    const previousSelection = store.selectedItemId;
+
+    store.setSelectedItemId(null);
+    if (previousView !== "perspective") {
+      store.setViewMode("perspective");
+      await new Promise((resolve) => setTimeout(resolve, 400));
+    }
+
+    const deadline = Date.now() + 8000;
+    while (!snapshotFnRef.current && Date.now() < deadline) {
+      await new Promise((resolve) => setTimeout(resolve, 100));
+    }
     if (!snapshotFnRef.current) return null;
+
     try {
-      const dataUrl = snapshotFnRef.current();
-      const blob = await fetch(dataUrl).then((r) => r.blob());
-      const file = new File([blob], `snapshot-${Date.now()}.jpg`, { type: "image/jpeg" });
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/upload-snapshot", { method: "POST", body: formData });
-      if (res.ok) {
+      for (let attempt = 0; attempt < 5; attempt += 1) {
+        await new Promise<void>((resolve) => {
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => requestAnimationFrame(() => resolve()))
+          );
+        });
+
+        const dataUrl = snapshotFnRef.current();
+        if (!dataUrl.startsWith("data:image/")) continue;
+
+        const blob = await fetch(dataUrl).then((r) => r.blob());
+        if (blob.size < 256) continue;
+
+        const file = new File([blob], `snapshot-${Date.now()}.jpg`, { type: "image/jpeg" });
+        const formData = new FormData();
+        formData.append("file", file);
+        const res = await fetch("/api/upload-snapshot", { method: "POST", body: formData });
+        if (!res.ok) {
+          const body = await res.json().catch(() => null);
+          console.error("Snapshot upload failed:", body?.error ?? res.status);
+          continue;
+        }
+
         const { url } = await res.json();
-        return url;
+        if (typeof url === "string" && url.length > 0) return url;
       }
     } catch (e) {
       console.error("Snapshot upload failed:", e);
+    } finally {
+      if (previousView !== "perspective") {
+        store.setViewMode(previousView);
+      }
+      if (previousSelection) {
+        store.setSelectedItemId(previousSelection);
+      }
     }
     return null;
   }
@@ -65,13 +125,33 @@ export function DesignerContent() {
     setDesignId,
     designName,
     setDesignName,
+    setSourceTemplateId,
     balconyWidthCm,
     balconyHeightCm,
     setBalconySize,
     viewMode,
+    setViewMode,
   } = useDesignerStore();
 
-  // Load products and categories
+  const markClean = useCallback(() => {
+    const state = useDesignerStore.getState();
+    baselineRef.current = createDesignSnapshot({
+      designName: state.designName,
+      balconyWidthCm: state.balconyWidthCm,
+      balconyHeightCm: state.balconyHeightCm,
+      items: state.items,
+    });
+    setCleanVersion((version) => version + 1);
+  }, []);
+
+  const isDirty = useMemo(() => {
+    if (!isReady) return false;
+    return isDesignDirty(
+      { designName, balconyWidthCm, balconyHeightCm, items },
+      baselineRef.current
+    );
+  }, [isReady, designName, balconyWidthCm, balconyHeightCm, items, cleanVersion]);
+
   useEffect(() => {
     async function loadData() {
       const [productsRes, categoriesRes] = await Promise.all([
@@ -84,193 +164,317 @@ export function DesignerContent() {
     loadData();
   }, [setProducts, setCategories]);
 
-  // Single effect to reset then load design or template — prevents race conditions
+  const designParam = searchParams.get("id") ?? "";
+  const templateParam = searchParams.get("template") ?? "";
+  const widthParam = searchParams.get("w") ?? "";
+  const heightParam = searchParams.get("h") ?? "";
+
   useEffect(() => {
-    // Always reset first
-    setItems([]);
-    setDesignId(null);
-    setDesignName("My Balcony Design");
-    setBalconySize(300, 200);
+    let cancelled = false;
 
-    const id = searchParams.get("id");
-    const templateId = searchParams.get("template");
+    async function loadDesign() {
+      setIsReady(false);
+      setItems([]);
+      setDesignId(null);
+      setSourceTemplateId(null);
+      setDesignName("My Balcony Design");
 
-    if (id) {
-      // Load existing design
-      fetch(`/api/designs/${id}`)
-        .then((res) => res.json())
-        .then((design) => {
+      const parsedWidth = Number(widthParam);
+      const parsedHeight = Number(heightParam);
+      const starterWidth =
+        Number.isFinite(parsedWidth) && parsedWidth >= 150 && parsedWidth <= 600
+          ? parsedWidth
+          : 300;
+      const starterHeight =
+        Number.isFinite(parsedHeight) && parsedHeight >= 100 && parsedHeight <= 400
+          ? parsedHeight
+          : 200;
+      setBalconySize(starterWidth, starterHeight);
+
+      try {
+        if (designParam) {
+          const res = await fetch(`/api/designs/${designParam}`);
+          const design = await res.json();
+          if (cancelled) return;
           if (design.id) {
             setDesignId(design.id);
+            setSourceTemplateId(design.templateId ?? null);
             setDesignName(design.name);
             setBalconySize(design.balconyWidthCm, design.balconyHeightCm);
             setItems(JSON.parse(design.layoutData || "[]"));
           } else {
-            console.error("Failed to load design:", design);
             toast.error(`Could not load design: ${design.error || "unknown error"}`);
           }
-        })
-        .catch((err) => {
-          console.error("Design fetch error:", err);
-          toast.error("Could not load design");
-        });
-    } else if (templateId) {
-      // Load template
-      fetch(`/api/templates/${templateId}`)
-        .then((res) => res.json())
-        .then((template) => {
-          if (template && template.id) {
-            setDesignName(`${template.name} - My Design`);
+        } else if (templateParam) {
+          const res = await fetch(`/api/templates/${templateParam}`);
+          const template = await res.json();
+          if (cancelled) return;
+          if (template?.id) {
+            setSourceTemplateId(template.id);
+            const isTemplateAdmin = session?.user && isAdmin(session.user);
+            setDesignName(isTemplateAdmin ? template.name : `${template.name} - My Design`);
             setBalconySize(template.balconyWidthCm, template.balconyHeightCm);
             const layoutItems = JSON.parse(template.layoutData || "[]");
-            setItems(layoutItems.map((item: Record<string, unknown>) => ({
-              ...item,
-              id: crypto.randomUUID(),
-            })));
-          } else {
-            console.error("Failed to load template:", template);
+            setItems(
+              layoutItems.map((item: Record<string, unknown>) => ({
+                ...item,
+                id: crypto.randomUUID(),
+              }))
+            );
           }
-        })
-        .catch(() => console.error("Failed to load template"));
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [searchParams]);
+        }
+      } catch {
+        if (!cancelled) toast.error("Could not load design");
+      }
 
-  async function handleSave() {
+      if (!cancelled) {
+        markClean();
+        setIsReady(true);
+      }
+    }
+
+    loadDesign();
+    return () => {
+      cancelled = true;
+    };
+  }, [
+    designParam,
+    templateParam,
+    widthParam,
+    heightParam,
+    setItems,
+    setDesignId,
+    setSourceTemplateId,
+    setDesignName,
+    setBalconySize,
+    markClean,
+    session?.user,
+  ]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    const onBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", onBeforeUnload);
+    return () => window.removeEventListener("beforeunload", onBeforeUnload);
+  }, [isDirty]);
+
+  useEffect(() => {
+    if (!isDirty) return;
+    window.history.pushState(null, "", window.location.href);
+    const onPopState = () => {
+      window.history.pushState(null, "", window.location.href);
+      pendingNavRef.current = BACK_NAV;
+      setLeaveOpen(true);
+    };
+    window.addEventListener("popstate", onPopState);
+    return () => window.removeEventListener("popstate", onPopState);
+  }, [isDirty]);
+
+  const performNavigation = useCallback(
+    (target: string) => {
+      pendingNavRef.current = null;
+      setLeaveOpen(false);
+      if (target === BACK_NAV) {
+        router.back();
+      } else {
+        router.push(target);
+      }
+    },
+    [router]
+  );
+
+  const requestNavigation = useCallback(
+    (href: string) => {
+      if (!isDirty) {
+        router.push(href);
+        return;
+      }
+      pendingNavRef.current = href;
+      setLeaveOpen(true);
+    },
+    [isDirty, router]
+  );
+
+  const handleSave = useCallback(async (): Promise<boolean> => {
     if (!session) {
       router.push("/login");
-      return;
+      return false;
     }
 
     setSaving(true);
     try {
       const layoutData = JSON.stringify(items);
       const thumbnailUrl = await captureAndUploadSnapshot();
+      const sourceTemplateId =
+        useDesignerStore.getState().sourceTemplateId ?? searchParams.get("template");
+      const editingTemplate = Boolean(
+        sourceTemplateId && isAdmin(session.user) && !designId
+      );
 
-      const templateId = searchParams.get("template");
-      const isAdmin = session.user?.role?.toLowerCase() === "admin";
-
-      if (templateId && isAdmin && !designId) {
-        const res = await fetch(`/api/admin/templates/${templateId}`, {
+      if (editingTemplate && sourceTemplateId) {
+        const res = await fetch(`/api/admin/templates/${sourceTemplateId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
+          body: JSON.stringify({
+            name: designName,
+            balconyWidthCm,
+            balconyHeightCm,
+            layoutData,
+            ...(thumbnailUrl && { thumbnailUrl }),
+          }),
         });
-        if (res.ok) toast.success("Template saved!");
-        else toast.error("Failed to save template");
-      } else if (designId) {
+        if (res.ok) {
+          toast.success("Template saved");
+          if (!thumbnailUrl) toast.error("Preview could not be saved");
+          markClean();
+          return true;
+        }
+        toast.error("Failed to save template");
+        return false;
+      }
+
+      if (designId) {
         const res = await fetch(`/api/designs/${designId}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
-        });
-        if (res.ok) toast.success("Design saved!");
-        else toast.error("Failed to save design");
-      } else {
-        const res = await fetch("/api/designs", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: designName, balconyWidthCm, balconyHeightCm, layoutData, ...(thumbnailUrl && { thumbnailUrl }) }),
+          body: JSON.stringify({
+            name: designName,
+            balconyWidthCm,
+            balconyHeightCm,
+            layoutData,
+            ...(thumbnailUrl && { thumbnailUrl }),
+          }),
         });
         if (res.ok) {
-          const design = await res.json();
-          setDesignId(design.id);
-          window.history.replaceState(null, "", `/designer?id=${design.id}`);
-          toast.success("Design created!");
-        } else {
-          toast.error("Failed to create design");
+          toast.success("Design saved");
+          if (!thumbnailUrl) toast.error("Preview could not be saved");
+          markClean();
+          return true;
         }
+        toast.error("Failed to save design");
+        return false;
       }
+
+      const res = await fetch("/api/designs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: designName,
+          balconyWidthCm,
+          balconyHeightCm,
+          layoutData,
+          ...(sourceTemplateId && { templateId: sourceTemplateId }),
+          ...(thumbnailUrl && { thumbnailUrl }),
+        }),
+      });
+      if (res.ok) {
+        const design = await res.json();
+        setDesignId(design.id);
+        setSourceTemplateId(design.templateId ?? sourceTemplateId ?? null);
+        window.history.replaceState(null, "", `/designer?id=${design.id}`);
+        toast.success("Design created");
+        if (!thumbnailUrl) toast.error("Preview could not be saved");
+        markClean();
+        return true;
+      }
+      toast.error("Failed to create design");
+      return false;
     } catch (err) {
       console.error("Save error:", err);
       toast.error("Something went wrong");
+      return false;
+    } finally {
+      setSaving(false);
     }
-    setSaving(false);
+  }, [
+    session,
+    router,
+    items,
+    searchParams,
+    designId,
+    designName,
+    balconyWidthCm,
+    balconyHeightCm,
+    setDesignId,
+    markClean,
+  ]);
+
+  async function handleLeaveSave() {
+    const saved = await handleSave();
+    if (saved && pendingNavRef.current) {
+      performNavigation(pendingNavRef.current);
+    }
   }
 
-  return (
-    <div className="h-screen flex flex-col">
-      {/* Screen size warning overlay */}
-      <ScreenSizeWarning />
-      
-      {/* Top bar */}
-      <div className="flex items-center justify-between bg-white border-b px-4 py-2 shadow-sm">
-        <div className="flex items-center gap-3">
-          <Link href="/" className="text-primary font-bold text-lg hover:text-primary/80">
-            Happy Outdoor
-          </Link>
-          <span className="text-nav-divider">|</span>
-          {editingName ? (
-            <Input
-              value={designName}
-              onChange={(e) => setDesignName(e.target.value)}
-              onBlur={() => setEditingName(false)}
-              onKeyDown={(e) => e.key === "Enter" && setEditingName(false)}
-              className="w-60 h-8"
-              autoFocus
-            />
-          ) : (
-            <button
-              onClick={() => setEditingName(true)}
-              className="group flex items-center gap-2 px-3 py-1.5 rounded-md hover:bg-muted/50 transition-colors"
-            >
-              <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
-                {designName}
-              </span>
-              <EditPencil 
-                width={14} 
-                height={14} 
-                className="text-muted-foreground group-hover:text-primary transition-colors" 
-              />
-            </button>
-          )}
-        </div>
-        <div className="flex items-center gap-2">
-          <Link href="/dashboard">
-            <Button variant="outline" size="sm" className="gap-2">
-              <ViewGrid width={16} height={16} />
-              Dashboard
-            </Button>
-          </Link>
-          <Button
-            onClick={handleSave}
-            disabled={saving}
-            size="sm"
-            className="min-w-[120px] relative gap-2"
-          >
-            {saving ? (
-              <span className="flex items-center gap-2">
-                <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Saving...
-              </span>
-            ) : (
-              <>
-                <FloppyDisk width={16} height={16} />
-                {searchParams.get("template") && session?.user?.role?.toLowerCase() === "admin" && !designId 
-                  ? "Save Template" 
-                  : "Save Design"}
-              </>
-            )}
-          </Button>
-          <UserMenu />
-        </div>
-      </div>
+  function handleLeaveDiscard() {
+    if (pendingNavRef.current) {
+      performNavigation(pendingNavRef.current);
+    } else {
+      setLeaveOpen(false);
+    }
+  }
 
-      {/* Toolbar */}
+  const isAdminUser = session?.user ? isAdmin(session.user) : false;
+  const saveLabel =
+    searchParams.get("template") && isAdminUser && !designId ? "Save template" : "Save";
+
+  return (
+    <div className="designer-shell">
+      <ScreenSizeWarning />
+
+      <DesignerHeader
+        designName={designName}
+        onDesignNameChange={setDesignName}
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onSave={() => void handleSave()}
+        saving={saving}
+        isAdmin={isAdminUser}
+        saveLabel={saveLabel}
+        isDirty={isDirty}
+        onNavigate={requestNavigation}
+      />
+
       <ToolBar />
 
-      {/* Main content: Canvas/Scene + Catalog */}
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1">
-          {viewMode === "topView" ? <Canvas /> : <IsometricScene onSnapshotReady={handleSnapshotReady} />}
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <div className="designer-stage min-w-0 flex-1">
+          <div className="designer-viewport relative">
+            <div
+              className={cn(
+                "absolute inset-0",
+                viewMode === "topView" && "pointer-events-none invisible"
+              )}
+              aria-hidden={viewMode === "topView"}
+            >
+              <IsometricScene
+                onSnapshotReady={handleSnapshotReady}
+                frameloop={viewMode === "perspective" ? "always" : "demand"}
+              />
+            </div>
+            {viewMode === "topView" ? (
+              <div className="absolute inset-0">
+                <Canvas />
+              </div>
+            ) : null}
+          </div>
         </div>
-        <div className="w-80 flex-shrink-0">
-          <ProductCatalog />
-        </div>
+        <ProductCatalog />
       </div>
+
+      <DesignerLeaveDialog
+        open={leaveOpen}
+        saving={saving}
+        onStay={() => {
+          pendingNavRef.current = null;
+          setLeaveOpen(false);
+        }}
+        onDiscard={handleLeaveDiscard}
+        onSave={() => void handleLeaveSave()}
+      />
     </div>
   );
 }

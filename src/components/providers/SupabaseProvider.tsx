@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { AuthUser } from "@/lib/auth";
+import type { AuthUser } from "@/lib/auth-types";
 import type { User } from "@supabase/supabase-js";
 
 type AuthContextType = {
@@ -17,27 +17,43 @@ const AuthContext = createContext<AuthContextType>({
   refresh: async () => {},
 });
 
-async function fetchProfile(supabaseUser: User): Promise<AuthUser> {
-  const supabase = createClient();
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("id, email, name, role")
-    .eq("id", supabaseUser.id)
-    .single();
+function userFromMetadata(user: User): AuthUser | null {
+  const role = user.user_metadata?.role;
+  if (typeof role !== "string" || !role.trim()) return null;
 
-  if (profile) {
-    return {
-      id: profile.id,
-      email: profile.email,
-      name: profile.name,
-      role: profile.role,
-    };
+  const name = user.user_metadata?.name;
+  return {
+    id: user.id,
+    email: user.email ?? "",
+    name: typeof name === "string" ? name : null,
+    role: role.toUpperCase(),
+  };
+}
+
+async function fetchProfileFromApi(): Promise<AuthUser | null> {
+  try {
+    const res = await fetch("/api/auth/profile", { credentials: "include" });
+    if (!res.ok) return null;
+    const { user } = await res.json();
+    return user;
+  } catch {
+    return null;
   }
+}
+
+async function fetchProfile(supabaseUser: User, forceApi = false): Promise<AuthUser> {
+  if (!forceApi) {
+    const fromMetadata = userFromMetadata(supabaseUser);
+    if (fromMetadata) return fromMetadata;
+  }
+
+  const fromApi = await fetchProfileFromApi();
+  if (fromApi) return fromApi;
 
   return {
     id: supabaseUser.id,
     email: supabaseUser.email ?? "",
-    name: supabaseUser.user_metadata?.name ?? null,
+    name: (supabaseUser.user_metadata?.name as string | undefined) ?? null,
     role: "USER",
   };
 }
@@ -45,35 +61,60 @@ async function fetchProfile(supabaseUser: User): Promise<AuthUser> {
 export function SupabaseProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   const refresh = async () => {
-    const {
-      data: { user: authUser },
-    } = await supabase.auth.getUser();
-    if (authUser) {
-      setUser(await fetchProfile(authUser));
-    } else {
+    try {
+      const supabase = createClient();
+      const {
+        data: { session },
+        error,
+      } = await supabase.auth.getSession();
+
+      if (error || !session?.user) {
+        setUser(null);
+        return;
+      }
+
+      setUser(await fetchProfile(session.user, true));
+    } catch {
       setUser(null);
     }
   };
 
   useEffect(() => {
-    refresh().finally(() => setLoading(false));
+    const supabase = createClient();
+
+    supabase.auth.getSession().then(async ({ data: { session }, error }) => {
+      try {
+        if (error || !session?.user) {
+          setUser(null);
+          return;
+        }
+        setUser(await fetchProfile(session.user, true));
+      } catch {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    });
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      if (session?.user) {
-        setUser(await fetchProfile(session.user));
-      } else {
+      try {
+        if (session?.user) {
+          setUser(await fetchProfile(session.user, true));
+        } else {
+          setUser(null);
+        }
+      } catch {
         setUser(null);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return () => subscription.unsubscribe();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

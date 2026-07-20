@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from "react";
 import { useDesignerStore } from "@/lib/designer-store";
+import { cn } from "@/lib/utils";
 
 const SCALE = 2;
 
@@ -173,11 +174,10 @@ export function PerspectiveView() {
                     />
                     {/* Product image */}
                     <div
-                      className={`w-full h-full rounded overflow-hidden transition-all ${
-                        isSelected
-                          ? "ring-2 ring-[#8fa64a] shadow-lg shadow-[#8fa64a]/30"
-                          : "shadow-md group-hover:shadow-lg group-hover:shadow-black/15"
-                      }`}
+                      className={cn(
+                        "h-full w-full overflow-hidden rounded transition-all",
+                        isSelected ? "ring-2 ring-accent" : ""
+                      )}
                     >
                       {imgUrl ? (
                         <img
@@ -187,8 +187,8 @@ export function PerspectiveView() {
                           draggable={false}
                         />
                       ) : (
-                        <div className="w-full h-full flex items-center justify-center bg-[#ddd8cc]">
-                          <span className="text-[10px] text-[#7a7468] text-center px-1 font-medium">
+                        <div className="flex h-full w-full items-center justify-center bg-surface-subtle">
+                          <span className="px-1 text-center text-caption font-medium text-muted-foreground">
                             {product.name}
                           </span>
                         </div>
@@ -196,12 +196,12 @@ export function PerspectiveView() {
                     </div>
                     {/* Label */}
                     <div
-                      className={`absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap px-2 py-0.5 rounded text-[9px] font-medium transition-opacity ${
+                      className={cn(
+                        "absolute -bottom-5 left-1/2 -translate-x-1/2 whitespace-nowrap rounded px-2 py-0.5 text-caption font-medium transition-opacity",
                         isSelected
-                          ? "bg-[#6b7f3b] text-white opacity-100"
-                          : "bg-white/95 text-[#3d3529] opacity-0 group-hover:opacity-100"
-                      }`}
-                      style={{ boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
+                          ? "bg-primary text-primary-foreground opacity-100"
+                          : "bg-card/95 text-foreground opacity-0 group-hover:opacity-100"
+                      )}
                     >
                       {product.name}
                     </div>
@@ -399,10 +399,10 @@ export function PerspectiveView() {
       />
 
       {/* Info overlays */}
-      <div className="absolute bottom-3 left-3 bg-white/90 rounded-md px-3 py-1.5 text-xs text-[#7a7468] shadow-sm backdrop-blur-sm">
+      <div className="absolute bottom-3 left-3 rounded-md border border-border bg-card/90 px-3 py-1.5 text-caption text-muted-foreground backdrop-blur-sm">
         {balconyWidthCm} x {balconyHeightCm} cm · {items.length} item{items.length !== 1 ? "s" : ""}
       </div>
-      <div className="absolute top-3 left-3 bg-white/90 rounded-md px-3 py-1.5 text-xs font-medium text-[#3d3529] shadow-sm backdrop-blur-sm">
+      <div className="absolute top-3 left-3 rounded-md border border-border bg-card/90 px-3 py-1.5 text-caption font-medium text-foreground backdrop-blur-sm">
         3D Balcony Preview
       </div>
     </div>

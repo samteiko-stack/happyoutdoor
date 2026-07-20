@@ -4,7 +4,9 @@ import { useRef, useEffect, useState, useCallback } from "react";
 import { Stage, Layer, Rect, Text, Group, Line, Transformer } from "react-konva";
 import Konva from "konva";
 import { useDesignerStore } from "@/lib/designer-store";
+import { designerColors } from "@/lib/design-tokens";
 import { CanvasItemComponent } from "./CanvasItem";
+import { cn } from "@/lib/utils";
 
 const SCALE = 2; // 1 cm = 2 pixels
 const PADDING = 40;
@@ -27,6 +29,7 @@ export function Canvas() {
     updateItem,
     products,
     zoom,
+    zoomAutoFit,
     deleteItem,
   } = useDesignerStore();
 
@@ -51,13 +54,14 @@ export function Canvas() {
     return () => observer.disconnect();
   }, []);
 
-  // Auto-fit zoom
+  // Auto-fit zoom (skipped while a landing demo drives zoom manually)
   useEffect(() => {
+    if (!zoomAutoFit) return;
     const scaleX = (containerSize.width - PADDING * 2) / canvasWidth;
     const scaleY = (containerSize.height - PADDING * 2) / canvasHeight;
     const autoZoom = Math.min(scaleX, scaleY, 1.5);
     useDesignerStore.getState().setZoom(autoZoom);
-  }, [containerSize, canvasWidth, canvasHeight]);
+  }, [containerSize, canvasWidth, canvasHeight, zoomAutoFit]);
 
   // Update transformer when selection changes
   useEffect(() => {
@@ -84,7 +88,7 @@ export function Canvas() {
       <Line
         key={`v-${x}`}
         points={[x * SCALE, 0, x * SCALE, canvasHeight]}
-        stroke="#e5e7eb"
+        stroke={designerColors.gridLine}
         strokeWidth={0.5}
       />
     );
@@ -94,7 +98,7 @@ export function Canvas() {
       <Line
         key={`h-${y}`}
         points={[0, y * SCALE, canvasWidth, y * SCALE]}
-        stroke="#e5e7eb"
+        stroke={designerColors.gridLine}
         strokeWidth={0.5}
       />
     );
@@ -155,7 +159,10 @@ export function Canvas() {
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full bg-gray-100 relative ${selectedProductId ? "cursor-crosshair" : "cursor-default"}`}
+      className={cn(
+        "relative h-full w-full bg-designer-canvas-bg",
+        selectedProductId ? "cursor-crosshair" : "cursor-default"
+      )}
     >
       <Stage
         ref={stageRef}
@@ -171,15 +178,10 @@ export function Canvas() {
             y={0}
             width={canvasWidth}
             height={canvasHeight}
-            fill="white"
-            stroke="#8fa64a"
+            fill={designerColors.canvasFloor}
+            stroke={designerColors.selection}
             strokeWidth={2}
             cornerRadius={4}
-            shadowColor="#000"
-            shadowBlur={10}
-            shadowOpacity={0.1}
-            shadowOffsetX={2}
-            shadowOffsetY={2}
           />
 
           {/* Grid */}
@@ -191,14 +193,14 @@ export function Canvas() {
             x={canvasWidth / 2 - 30}
             y={canvasHeight + 10}
             fontSize={12}
-            fill="#6b7280"
+            fill={designerColors.labelMuted}
           />
           <Text
             text={`${balconyHeightCm} cm`}
             x={canvasWidth + 10}
             y={canvasHeight / 2 - 6}
             fontSize={12}
-            fill="#6b7280"
+            fill={designerColors.labelMuted}
             rotation={0}
           />
 
@@ -227,23 +229,23 @@ export function Canvas() {
             ref={transformerRef}
             rotateEnabled={true}
             enabledAnchors={[]}
-            borderStroke="#8fa64a"
+            borderStroke={designerColors.selection}
             borderStrokeWidth={2}
             rotateAnchorOffset={20}
-            anchorStroke="#8fa64a"
-            anchorFill="#fff"
+            anchorStroke={designerColors.selection}
+            anchorFill={designerColors.white}
             anchorSize={10}
           />
         </Layer>
       </Stage>
 
       {/* Zoom indicator */}
-      <div className="absolute bottom-3 left-3 bg-white/90 rounded-md px-2 py-1 text-xs text-gray-500 shadow-sm">
+      <div className="absolute bottom-3 left-3 rounded-md border border-border bg-card/90 px-2 py-1 text-caption text-muted-foreground backdrop-blur-sm">
         {Math.round(zoom * 100)}%
       </div>
 
       {selectedProductId && (
-        <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-primary text-white px-4 py-2 rounded text-sm shadow-lg">
+        <div className="absolute top-3 left-1/2 -translate-x-1/2 rounded-md bg-primary px-4 py-2 text-body text-primary-foreground">
           Click on the balcony to place the product
         </div>
       )}

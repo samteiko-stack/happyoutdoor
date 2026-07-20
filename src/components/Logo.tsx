@@ -1,20 +1,36 @@
 import Image from "next/image";
+import { cn } from "@/lib/utils";
+
+type LogoVariant = "dark" | "light" | "mark" | "color" | "white";
 
 interface LogoProps {
-  variant?: "color" | "white";
+  /** dark = green wordmark on light bg, light = white wordmark on dark bg, mark = icon only */
+  variant?: LogoVariant;
   width?: number;
   height?: number;
   className?: string;
 }
 
-export function Logo({ variant = "color", width = 120, height = 45, className }: LogoProps) {
+const sources: Record<LogoVariant, string> = {
+  dark: "/logo-dark.png",
+  light: "/logo-light.png",
+  mark: "/brand-mark.png",
+  color: "/logo-dark.png",
+  white: "/logo-light.png",
+};
+
+export function Logo({ variant = "dark", width = 120, height = 45, className }: LogoProps) {
+  const resolved = variant === "color" ? "dark" : variant === "white" ? "light" : variant;
+  const isMark = resolved === "mark";
+
   return (
     <Image
-      src={variant === "white" ? "/logo-white.png" : "/logo-color.png"}
+      src={sources[resolved]}
       alt="Happy Outdoor"
-      width={width}
+      width={isMark ? height : width}
       height={height}
-      className={className}
+      style={{ width: "auto", height: "auto" }}
+      className={cn(isMark && "aspect-square object-contain", className)}
       priority
     />
   );

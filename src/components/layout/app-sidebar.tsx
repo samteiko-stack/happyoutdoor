@@ -1,0 +1,86 @@
+"use client";
+
+import Link from "next/link";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
+import { Plus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Logo } from "@/components/Logo";
+import { UserMenu } from "@/components/UserMenu";
+import { useSession } from "@/components/providers/SupabaseProvider";
+import { cn } from "@/lib/utils";
+import { getNavSections, getHomeHref, newDesignHref, isNavActive } from "./app-nav-config";
+
+const PulseDots = dynamic(
+  () => import("./pulse-dots").then((mod) => ({ default: mod.PulseDots })),
+  { ssr: false }
+);
+
+export function AppSidebar() {
+  const pathname = usePathname();
+  const { data: session } = useSession();
+  const user = session?.user;
+  const isAdmin = user?.role?.toUpperCase() === "ADMIN";
+
+  const sections = getNavSections(isAdmin);
+
+  return (
+    <aside className="app-sidebar hidden md:flex w-[var(--spacing-sidebar-width)] shrink-0 flex-col text-sidebar-foreground">
+      <PulseDots />
+
+      <div className="px-5 pt-7 pb-5">
+        <Link href={getHomeHref(isAdmin)} className="inline-flex">
+          <Logo variant="light" width={128} height={46} />
+        </Link>
+      </div>
+
+      {!isAdmin && (
+        <div className="px-4">
+          <Button
+            asChild
+            className="w-full justify-center bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+          >
+            <Link href={newDesignHref}>
+              <Plus className="size-4" />
+              New design
+            </Link>
+          </Button>
+        </div>
+      )}
+
+      <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-5">
+        {sections.map((section) => (
+          <div key={section.label}>
+            <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+              {section.label}
+            </p>
+            <ul className="space-y-0.5">
+              {section.items.map((item) => {
+                const active = isNavActive(pathname, item.href, item.exact);
+                const Icon = item.icon;
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={cn(
+                        "sidebar-nav-item motion-interactive flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium",
+                        active && "sidebar-nav-item-active"
+                      )}
+                    >
+                      <Icon className="size-[17px] shrink-0" strokeWidth={1.75} />
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ))}
+      </nav>
+
+      <div className="sidebar-footer mt-auto shrink-0 border-t border-white/10 p-3">
+        <UserMenu variant="sidebar" />
+      </div>
+    </aside>
+  );
+}

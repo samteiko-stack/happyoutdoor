@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { AppShell, AppNav, PageContainer, PageHeader, LoadingState } from "@/components/layout";
+import { AppLayout, AppPage, AppPageHeader, LoadingState } from "@/components/layout";
 
 interface CanvasItem {
   id: string;
@@ -49,30 +49,42 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
   }, [id]);
 
   if (loading) {
-    return <LoadingState message="Loading..." />;
+    return (
+      <AppLayout>
+        <AppPage>
+          <LoadingState message="Loading…" />
+        </AppPage>
+      </AppLayout>
+    );
   }
 
   if (!design) {
-    return <LoadingState message="Design not found" />;
+    return (
+      <AppLayout>
+        <AppPage>
+          <LoadingState message="Design not found" />
+        </AppPage>
+      </AppLayout>
+    );
   }
 
   if (!design.isPaid) {
     return (
-      <AppShell surface="muted">
-        <div className="min-h-screen flex items-center justify-center p-4">
-          <Card className="max-w-md">
+      <AppLayout>
+        <AppPage>
+          <Card>
             <CardHeader>
-              <CardTitle>Links Not Unlocked</CardTitle>
-              <CardDescription>You need to unlock this design to view product links.</CardDescription>
+              <CardTitle>Links not unlocked</CardTitle>
+              <CardDescription>Unlock this design to view product links.</CardDescription>
             </CardHeader>
             <CardContent>
               <Link href={`/designs/${design.id}`}>
-                <Button className="w-full">Go to Design</Button>
+                <Button className="w-full">View design</Button>
               </Link>
             </CardContent>
           </Card>
-        </div>
-      </AppShell>
+        </AppPage>
+      </AppLayout>
     );
   }
 
@@ -87,64 +99,42 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
     .filter(Boolean) as (Product & { count: number })[];
 
   return (
-    <AppShell surface="muted">
-      <AppNav
-        containerSize="sm"
-        blur
-        breadcrumbs={
-          <>
-            <Link href="/designs" className="text-muted-foreground hover:text-foreground">
-              My Designs
-            </Link>
-            <span className="text-nav-divider">/</span>
-            <span className="font-medium text-foreground">{design.name} — Shopping Links</span>
-          </>
-        }
-      />
+    <AppLayout>
+      <AppPage>
+        <AppPageHeader title="Shopping links" meta={design.name} />
 
-      <PageContainer size="sm" className="py-8">
-        <PageHeader
-          size="heading-2"
-          title="Your Shopping Links"
-          description="Click on any product to purchase it directly"
-          className="mb-6"
-        />
-
-        <div className="space-y-4">
+        <div className="space-y-3">
           {usedProducts.map((product) => (
             <Card key={product.id}>
-              <CardContent className="flex items-center justify-between py-4">
-                <div className="flex items-center gap-4">
+              <CardContent className="flex items-center justify-between gap-4 py-4">
+                <div className="flex min-w-0 items-center gap-4">
                   {product.imageUrl ? (
                     <img
                       src={product.imageUrl}
                       alt={product.name}
-                      className="w-16 h-16 object-cover rounded-lg"
+                      className="size-14 shrink-0 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-surface-muted rounded-lg flex items-center justify-center text-muted-foreground">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+                    <div className="flex size-14 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                      —
                     </div>
                   )}
-                  <div>
-                    <p className="font-semibold">{product.name}</p>
-                    <p className="text-body">
-                      {product.category.name} &middot; ${product.price.toFixed(2)}
+                  <div className="min-w-0">
+                    <p className="font-medium">{product.name}</p>
+                    <p className="text-sm text-muted-foreground">
+                      {product.category.name}
                     </p>
-                    {product.description && (
-                      <p className="text-caption mt-1">{product.description}</p>
-                    )}
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <Badge variant="secondary">x{product.count}</Badge>
+                <div className="flex shrink-0 items-center gap-2">
+                  <Badge variant="secondary">×{product.count}</Badge>
                   {product.affiliateLink ? (
                     <a href={product.affiliateLink} target="_blank" rel="noopener noreferrer">
-                      <Button>Shop Now</Button>
+                      <Button size="sm">Shop</Button>
                     </a>
                   ) : (
-                    <Button variant="outline" disabled>
-                      Link unavailable
+                    <Button size="sm" variant="outline" disabled>
+                      Unavailable
                     </Button>
                   )}
                 </div>
@@ -153,15 +143,15 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
           ))}
         </div>
 
-        <div className="mt-8 flex gap-3">
+        <div className="button-group mt-8">
           <Link href={`/designer?id=${design.id}`}>
-            <Button variant="outline">Back to Designer</Button>
+            <Button variant="outline">Edit design</Button>
           </Link>
           <Link href="/designs">
-            <Button variant="outline">All Designs</Button>
+            <Button variant="outline">All designs</Button>
           </Link>
         </div>
-      </PageContainer>
-    </AppShell>
+      </AppPage>
+    </AppLayout>
   );
 }

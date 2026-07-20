@@ -2,16 +2,15 @@
 
 import { useState, useEffect } from "react";
 import { useSession } from "@/components/providers/SupabaseProvider";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { FloppyDisk } from "iconoir-react";
-import { AppShell, AppNav, PageContainer, LoadingState } from "@/components/layout";
+import { Save } from "lucide-react";
+import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
 import { StatusBadge } from "@/components/admin";
+import { UserAvatar } from "@/components/user-avatar";
 
 interface UserData {
   id: string;
@@ -115,30 +114,31 @@ export default function SettingsPage() {
   }
 
   if (loading) {
-    return <LoadingState message="Loading settings..." />;
+    return (
+      <AppLayout>
+        <AppPage>
+          <LoadingState message="Loading settings…" />
+        </AppPage>
+      </AppLayout>
+    );
   }
 
   return (
-    <AppShell surface="muted">
-      <AppNav
-        containerSize="sm"
-        blur
-        breadcrumbs={<span className="font-semibold">Account Settings</span>}
-      />
-
-      <PageContainer size="sm" className="py-8 space-y-6">
+    <AppLayout>
+      <AppPage>
+        <PageStack>
         {/* Account overview */}
         <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-14 h-14 rounded bg-accent/10 flex items-center justify-center">
-                  <span className="text-xl font-bold text-primary">
-                    {user?.name
-                      ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-                      : user?.email?.charAt(0).toUpperCase()}
-                  </span>
-                </div>
+                <UserAvatar
+                  id={user?.id}
+                  name={user?.name}
+                  email={user?.email}
+                  size="lg"
+                  className="size-14"
+                />
                 <div>
                   <CardTitle>{user?.name || "User"}</CardTitle>
                   <CardDescription>{user?.email}</CardDescription>
@@ -169,11 +169,11 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        <div className="grid gap-6 lg:grid-cols-2">
         {/* Profile form */}
         <Card>
           <CardHeader>
-            <CardTitle>Profile Information</CardTitle>
-            <CardDescription>Update your name and email address</CardDescription>
+            <CardTitle>Profile</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleUpdateProfile} className="space-y-4">
@@ -203,7 +203,7 @@ export default function SettingsPage() {
                   "Saving..."
                 ) : (
                   <>
-                    <FloppyDisk width={16} height={16} />
+                    <Save width={16} height={16} />
                     Save Changes
                   </>
                 )}
@@ -215,8 +215,7 @@ export default function SettingsPage() {
         {/* Password form */}
         <Card>
           <CardHeader>
-            <CardTitle>Change Password</CardTitle>
-            <CardDescription>Update your password to keep your account secure</CardDescription>
+            <CardTitle>Password</CardTitle>
           </CardHeader>
           <CardContent>
             <form onSubmit={handleChangePassword} className="space-y-4">
@@ -262,7 +261,7 @@ export default function SettingsPage() {
                   "Changing..."
                 ) : (
                   <>
-                    <FloppyDisk width={16} height={16} />
+                    <Save width={16} height={16} />
                     Change Password
                   </>
                 )}
@@ -270,15 +269,9 @@ export default function SettingsPage() {
             </form>
           </CardContent>
         </Card>
-
-        <Separator />
-
-        <div className="flex justify-center">
-          <Link href="/designer">
-            <Button>Back to Designer</Button>
-          </Link>
         </div>
-      </PageContainer>
-    </AppShell>
+        </PageStack>
+      </AppPage>
+    </AppLayout>
   );
 }

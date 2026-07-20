@@ -8,7 +8,8 @@ type StatusVariant =
   | "published"
   | "unpublished"
   | "admin"
-  | "user";
+  | "user"
+  | "neutral";
 
 interface StatusBadgeProps {
   status: StatusVariant;
@@ -16,14 +17,18 @@ interface StatusBadgeProps {
   className?: string;
 }
 
-const statusConfig: Record<StatusVariant, { variant: "default" | "secondary" | "outline"; label: string }> = {
-  draft: { variant: "secondary", label: "Draft" },
+const statusConfig: Record<
+  StatusVariant,
+  { variant: "default" | "secondary" | "outline" | "draft" | "unlocked" | "neutral"; label: string }
+> = {
+  draft: { variant: "draft", label: "Draft" },
   paid: { variant: "default", label: "Paid" },
-  unlocked: { variant: "default", label: "Unlocked" },
+  unlocked: { variant: "unlocked", label: "Unlocked" },
   published: { variant: "default", label: "Published" },
   unpublished: { variant: "secondary", label: "Unpublished" },
   admin: { variant: "default", label: "Admin" },
   user: { variant: "secondary", label: "User" },
+  neutral: { variant: "neutral", label: "Neutral" },
 };
 
 export function StatusBadge({ status, label, className }: StatusBadgeProps) {

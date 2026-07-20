@@ -1,10 +1,27 @@
 "use client";
 
-import React, { useMemo, useRef, useState, useEffect } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import React, { useMemo, useRef, useState, useEffect, type RefObject } from "react";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { OrbitControls, RoundedBox, useGLTF, useFBX } from "@react-three/drei";
 import * as THREE from "three";
 import { useDesignerStore } from "@/lib/designer-store";
+import {
+  useDesignerSceneColors,
+  useResolvedDesignerColor,
+  getDesignerBalconyPalette,
+} from "@/lib/designer-canvas-colors";
+import { captureIsometricSnapshot } from "@/lib/designer-isometric-snapshot";
+
+type OrbitControlsLike = {
+  target: THREE.Vector3;
+  minDistance: number;
+  maxDistance: number;
+  minPolarAngle: number;
+  maxPolarAngle: number;
+  enabled: boolean;
+  enableDamping: boolean;
+  update: () => void;
+};
 
 const CM = 0.01; // 100cm = 1 unit
 
@@ -306,9 +323,40 @@ function ProductShape({ categorySlug, productName, modelUrl, widthCm, heightCm, 
   }
 }
 
+function SceneBackground({ color }: { color: string }) {
+  const { scene, gl } = useThree();
+
+  useEffect(() => {
+    const threeColor = new THREE.Color(color);
+    scene.background = threeColor;
+    gl.setClearColor(threeColor, 1);
+  }, [scene, gl, color]);
+
+  return null;
+}
+
+function SceneExposure() {
+  const { gl } = useThree();
+
+  useEffect(() => {
+    gl.toneMappingExposure = 1;
+  }, [gl]);
+
+  return null;
+}
+
 // ----- SMART WALLS BALCONY -----
 
-function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
+function SmartWallsBalcony({
+  width,
+  depth,
+  isNight,
+}: {
+  width: number;
+  depth: number;
+  isNight: boolean;
+}) {
+  const palette = getDesignerBalconyPalette(isNight);
   const wallH = 2.4;
   const railingH = 1.0;
   const { camera } = useThree();
@@ -381,44 +429,44 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
         {/* Door frame */}
         <mesh position={[0, doorHeight / 2, 0]}>
           <boxGeometry args={[doorWidth + 0.15, doorHeight + 0.2, 0.08]} />
-          <meshStandardMaterial color="#b8a890" />
+          <meshStandardMaterial color={palette.doorFrame} />
         </mesh>
 
         {/* Glass door panel */}
         <mesh position={[0, doorHeight / 2, 0.02]} castShadow receiveShadow>
           <boxGeometry args={[doorWidth - 0.1, doorHeight - 0.1, 0.03]} />
           <meshPhysicalMaterial
-            color="#f0f8ff"
+            color={palette.glass}
             transparent
-            opacity={0.3}
+            opacity={palette.glassOpacity}
             roughness={0.05}
             metalness={0.05}
-            transmission={0.85}
+            transmission={isNight ? 0.2 : 0.85}
           />
         </mesh>
 
         {/* Door frame edges - lighter */}
         <mesh position={[-doorWidth / 2 + 0.05, doorHeight / 2, 0.02]}>
           <boxGeometry args={[0.04, doorHeight - 0.05, 0.04]} />
-          <meshStandardMaterial color="#6a5a4a" metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={palette.doorEdge} metalness={0.3} roughness={0.5} />
         </mesh>
         <mesh position={[doorWidth / 2 - 0.05, doorHeight / 2, 0.02]}>
           <boxGeometry args={[0.04, doorHeight - 0.05, 0.04]} />
-          <meshStandardMaterial color="#6a5a4a" metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={palette.doorEdge} metalness={0.3} roughness={0.5} />
         </mesh>
         <mesh position={[0, 0.05, 0.02]}>
           <boxGeometry args={[doorWidth - 0.1, 0.04, 0.04]} />
-          <meshStandardMaterial color="#6a5a4a" metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={palette.doorEdge} metalness={0.3} roughness={0.5} />
         </mesh>
         <mesh position={[0, doorHeight - 0.05, 0.02]}>
           <boxGeometry args={[doorWidth - 0.1, 0.04, 0.04]} />
-          <meshStandardMaterial color="#6a5a4a" metalness={0.3} roughness={0.5} />
+          <meshStandardMaterial color={palette.doorEdge} metalness={0.3} roughness={0.5} />
         </mesh>
 
         {/* Door handle - lighter */}
         <mesh position={[doorWidth / 2 - 0.15, doorHeight / 2, 0.06]}>
           <boxGeometry args={[0.03, 0.12, 0.03]} />
-          <meshStandardMaterial color="#d4d4d4" metalness={0.8} roughness={0.3} />
+          <meshStandardMaterial color={palette.doorHandle} metalness={0.8} roughness={0.3} />
         </mesh>
 
         {/* Click area to move door to different wall */}
@@ -443,7 +491,7 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
         {/* Visual indicator that door is clickable */}
         <mesh position={[0, doorHeight + 0.15, 0.05]}>
           <boxGeometry args={[0.15, 0.05, 0.02]} />
-            <meshBasicMaterial color="#A7B500" />
+            <meshBasicMaterial color="#8A9470" />
         </mesh>
       </group>
     );
@@ -454,31 +502,31 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
       {/* Floor base - thinner, lighter */}
       <mesh position={[0, -0.05, 0]} receiveShadow>
         <boxGeometry args={[width + 0.2, 0.1, depth + 0.2]} />
-        <meshStandardMaterial color="#8a7a6a" />
+        <meshStandardMaterial color={palette.floorBase} />
       </mesh>
       
       {/* Floor surface - brighter */}
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.001, 0]} receiveShadow>
         <planeGeometry args={[width, depth]} />
-        <meshStandardMaterial color="#e8d4b8" />
+        <meshStandardMaterial color={palette.floor} />
       </mesh>
 
       {/* Floor edge trim - lighter */}
       <mesh position={[-width / 2, 0.02, 0]}>
         <boxGeometry args={[0.02, 0.04, depth]} />
-        <meshStandardMaterial color="#b89870" />
+        <meshStandardMaterial color={palette.trim} />
       </mesh>
       <mesh position={[width / 2, 0.02, 0]}>
         <boxGeometry args={[0.02, 0.04, depth]} />
-        <meshStandardMaterial color="#b89870" />
+        <meshStandardMaterial color={palette.trim} />
       </mesh>
       <mesh position={[0, 0.02, -depth / 2]}>
         <boxGeometry args={[width, 0.04, 0.02]} />
-        <meshStandardMaterial color="#b89870" />
+        <meshStandardMaterial color={palette.trim} />
       </mesh>
       <mesh position={[0, 0.02, depth / 2]}>
         <boxGeometry args={[width, 0.04, 0.02]} />
-        <meshStandardMaterial color="#b89870" />
+        <meshStandardMaterial color={palette.trim} />
       </mesh>
 
       {/* Left wall */}
@@ -489,11 +537,11 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
             <>
               <mesh position={[-width / 2 - 0.06, wallH / 2, -depth / 4 - 0.45]} castShadow receiveShadow>
                 <boxGeometry args={[0.12, wallH, depth / 2 - 0.9]} />
-                <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
               </mesh>
               <mesh position={[-width / 2 - 0.06, wallH / 2, depth / 4 + 0.45]} castShadow receiveShadow>
                 <boxGeometry args={[0.12, wallH, depth / 2 - 0.9]} />
-                <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
               </mesh>
             </>
           )}
@@ -503,7 +551,7 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
       ) : wallsVisible.left ? (
         <mesh position={[-width / 2 - 0.06, wallH / 2, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.12, wallH, depth + 0.2]} />
-          <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+          <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
         </mesh>
       ) : null}
 
@@ -515,11 +563,11 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
             <>
               <mesh position={[width / 2 + 0.06, wallH / 2, -depth / 4 - 0.45]} castShadow receiveShadow>
                 <boxGeometry args={[0.12, wallH, depth / 2 - 0.9]} />
-                <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
               </mesh>
               <mesh position={[width / 2 + 0.06, wallH / 2, depth / 4 + 0.45]} castShadow receiveShadow>
                 <boxGeometry args={[0.12, wallH, depth / 2 - 0.9]} />
-                <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
               </mesh>
             </>
           )}
@@ -529,7 +577,7 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
       ) : wallsVisible.right ? (
         <mesh position={[width / 2 + 0.06, wallH / 2, 0]} castShadow receiveShadow>
           <boxGeometry args={[0.12, wallH, depth + 0.2]} />
-          <meshStandardMaterial color="#e8b89a" transparent opacity={0.95} />
+          <meshStandardMaterial color={palette.wall} transparent opacity={palette.wallOpacity} />
         </mesh>
       ) : null}
 
@@ -541,11 +589,11 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
             <>
               <mesh position={[-width / 4 - 0.45, wallH / 2, -depth / 2 - 0.06]} castShadow receiveShadow>
                 <boxGeometry args={[width / 2 - 0.9, wallH, 0.12]} />
-                <meshStandardMaterial color="#c8a878" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wallBack} transparent opacity={palette.wallOpacity} />
               </mesh>
               <mesh position={[width / 4 + 0.45, wallH / 2, -depth / 2 - 0.06]} castShadow receiveShadow>
                 <boxGeometry args={[width / 2 - 0.9, wallH, 0.12]} />
-                <meshStandardMaterial color="#c8a878" transparent opacity={0.95} />
+                <meshStandardMaterial color={palette.wallBack} transparent opacity={palette.wallOpacity} />
               </mesh>
             </>
           )}
@@ -555,7 +603,7 @@ function SmartWallsBalcony({ width, depth }: { width: number; depth: number }) {
       ) : wallsVisible.back ? (
         <mesh position={[0, wallH / 2, -depth / 2 - 0.06]} castShadow receiveShadow>
           <boxGeometry args={[width + 0.2, wallH, 0.12]} />
-          <meshStandardMaterial color="#c8a878" transparent opacity={0.95} />
+          <meshStandardMaterial color={palette.wallBack} transparent opacity={palette.wallOpacity} />
         </mesh>
       ) : null}
 
@@ -626,6 +674,8 @@ function DraggableProduct({
   const { camera, gl, controls, raycaster, scene } = useThree();
   const { updateItem, pushHistory } = useDesignerStore();
   const [isDragging, setIsDragging] = useState(false);
+  const selectionColor = useResolvedDesignerColor("selection");
+  const selectionGlow = useResolvedDesignerColor("selectionGlow");
   const intersectionPoint = useRef<THREE.Vector3>(new THREE.Vector3());
   const offsetRef = useRef<THREE.Vector3>(new THREE.Vector3());
   const initialPosRef = useRef<THREE.Vector3>(new THREE.Vector3());
@@ -828,14 +878,14 @@ function DraggableProduct({
           {/* Floor ring */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.004, 0]}>
             <ringGeometry args={[0.4, 0.48, 32]} />
-            <meshBasicMaterial color="#8fa64a" side={THREE.DoubleSide} transparent opacity={0.8} />
+            <meshBasicMaterial color={selectionColor} side={THREE.DoubleSide} transparent opacity={0.8} />
           </mesh>
           
           {/* Pulsing glow effect */}
           <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.003, 0]}>
             <ringGeometry args={[0.35, 0.5, 32]} />
             <meshBasicMaterial 
-              color="#CADC82" 
+              color={selectionGlow} 
               side={THREE.DoubleSide} 
               transparent 
               opacity={0.3}
@@ -847,7 +897,7 @@ function DraggableProduct({
             [-0.35, 0.35].map((z) => (
               <mesh key={`${x}-${z}`} position={[x, 0.25, z]}>
                 <boxGeometry args={[0.02, 0.5, 0.02]} />
-                <meshBasicMaterial color="#8fa64a" transparent opacity={0.6} />
+                <meshBasicMaterial color={selectionColor} transparent opacity={0.6} />
               </mesh>
             ))
           )}
@@ -859,9 +909,133 @@ function DraggableProduct({
 
 // ----- SCENE -----
 
+/**
+ * Smoothly pans / zooms / orbits when `cameraFocus` is set (landing demo).
+ * Disables OrbitControls while driving so damping cannot fight the lerp.
+ */
+function CameraFocusController({
+  controlsRef,
+}: {
+  controlsRef: RefObject<OrbitControlsLike | null>;
+}) {
+  const cameraFocus = useDesignerStore((s) => s.cameraFocus);
+  const { camera } = useThree();
+  const desiredTarget = useRef(new THREE.Vector3(0, 0.6, 0));
+  const desiredRadius = useRef<number | null>(null);
+  const desiredTheta = useRef<number | null>(null);
+  const offset = useRef(new THREE.Vector3());
+  const spherical = useRef(new THREE.Spherical());
+  const lastFocusKey = useRef<string | null>(null);
+  const savedDamping = useRef(true);
+
+  useEffect(() => {
+    const ctrl = controlsRef.current;
+    if (!ctrl) return;
+    ctrl.target.set(0, 0.6, 0);
+    ctrl.update();
+  }, [controlsRef]);
+
+  useEffect(() => {
+    const ctrl = controlsRef.current;
+    if (!cameraFocus) {
+      if (ctrl) {
+        ctrl.enabled = true;
+        ctrl.enableDamping = savedDamping.current;
+      }
+      desiredRadius.current = null;
+      desiredTheta.current = null;
+      lastFocusKey.current = null;
+      return;
+    }
+
+    if (ctrl) {
+      savedDamping.current = ctrl.enableDamping;
+      ctrl.enabled = false;
+      ctrl.enableDamping = false;
+    }
+
+    desiredTarget.current.set(
+      cameraFocus.target[0],
+      cameraFocus.target[1],
+      cameraFocus.target[2]
+    );
+    desiredRadius.current = cameraFocus.distance;
+
+    const key = `${cameraFocus.target.join(",")}|${cameraFocus.distance}|${cameraFocus.absoluteTheta ?? ""}|${cameraFocus.orbitDelta ?? ""}`;
+    if (key !== lastFocusKey.current && ctrl && camera) {
+      lastFocusKey.current = key;
+      offset.current.subVectors(camera.position, ctrl.target);
+      spherical.current.setFromVector3(offset.current);
+      if (cameraFocus.absoluteTheta != null) {
+        desiredTheta.current = cameraFocus.absoluteTheta;
+      } else if (cameraFocus.orbitDelta != null) {
+        desiredTheta.current = spherical.current.theta + cameraFocus.orbitDelta;
+      } else if (desiredTheta.current == null) {
+        desiredTheta.current = spherical.current.theta;
+      }
+    }
+  }, [cameraFocus, camera, controlsRef]);
+
+  useFrame((_, delta) => {
+    if (!cameraFocus) return;
+    const ctrl = controlsRef.current;
+    if (!ctrl) return;
+
+    const t = 1 - Math.exp(-2.4 * delta);
+
+    desiredTarget.current.set(
+      cameraFocus.target[0],
+      cameraFocus.target[1],
+      cameraFocus.target[2]
+    );
+    ctrl.target.lerp(desiredTarget.current, t);
+
+    offset.current.subVectors(camera.position, ctrl.target);
+    spherical.current.setFromVector3(offset.current);
+
+    const targetRadius = desiredRadius.current ?? cameraFocus.distance;
+    spherical.current.radius = THREE.MathUtils.lerp(
+      spherical.current.radius,
+      targetRadius,
+      t
+    );
+    spherical.current.radius = THREE.MathUtils.clamp(
+      spherical.current.radius,
+      Math.min(ctrl.minDistance, targetRadius * 0.95),
+      ctrl.maxDistance
+    );
+
+    if (cameraFocus.absoluteTheta != null) {
+      desiredTheta.current = cameraFocus.absoluteTheta;
+    }
+
+    if (desiredTheta.current != null) {
+      // Shortest-path lerp on yaw
+      let d = desiredTheta.current - spherical.current.theta;
+      while (d > Math.PI) d -= Math.PI * 2;
+      while (d < -Math.PI) d += Math.PI * 2;
+      spherical.current.theta += d * t;
+    }
+
+    spherical.current.phi = THREE.MathUtils.clamp(
+      spherical.current.phi,
+      ctrl.minPolarAngle,
+      ctrl.maxPolarAngle
+    );
+
+    offset.current.setFromSpherical(spherical.current);
+    camera.position.copy(ctrl.target).add(offset.current);
+    camera.lookAt(ctrl.target);
+    ctrl.update();
+  });
+
+  return null;
+}
+
 function Scene() {
   const { balconyWidthCm, balconyHeightCm, items, products, selectedItemId, setSelectedItemId, timeOfDay } =
     useDesignerStore();
+  const controlsRef = useRef<OrbitControlsLike | null>(null);
 
   const roomW = balconyWidthCm * CM;
   const roomD = balconyHeightCm * CM;
@@ -869,41 +1043,42 @@ function Scene() {
 
   // Lighting configuration based on time of day
   const isNight = timeOfDay === 'night';
-  const ambientIntensity = isNight ? 0.3 : 0.9;
-  const mainLightIntensity = isNight ? 0.8 : 2.2;
-  const fillLightIntensity = isNight ? 0.3 : 1.0;
-  const pointLightIntensity = isNight ? 0.2 : 0.6;
-  const hemisphereIntensity = isNight ? 0.2 : 0.8;
-  const backgroundColor = isNight ? '#0a0e1a' : '#d8e4d8';
-  const lightColor = isNight ? '#8899cc' : '#ffffff';
-  const fillLightColor = isNight ? '#6677aa' : '#fffef8';
+  const sceneColors = useDesignerSceneColors(isNight);
+  const ambientIntensity = isNight ? 0.32 : 0.65;
+  const mainLightIntensity = isNight ? 0.48 : 2.6;
+  const fillLightIntensity = isNight ? 0.18 : 0.85;
+  const pointLightIntensity = isNight ? 0.16 : 0.45;
+  const hemisphereIntensity = isNight ? 0.24 : 0.55;
 
   return (
     <>
+      <SceneBackground color={sceneColors.background} />
+      <SceneExposure />
       {/* Orbit controls - full control */}
       <OrbitControls
+        ref={controlsRef as never}
         makeDefault
-        target={[0, 0.6, 0]}
-        minDistance={maxDim * 1.5}
+        minDistance={maxDim * 0.95}
         maxDistance={maxDim * 8}
         enableRotate={true}
         enablePan={true}
         enableZoom={true}
         enableDamping
-        dampingFactor={0.05}
+        dampingFactor={0.08}
         minPolarAngle={Math.PI / 8}
         maxPolarAngle={Math.PI / 2.2}
         panSpeed={0.8}
         zoomSpeed={1}
       />
+      <CameraFocusController controlsRef={controlsRef} />
 
       {/* Lights - dynamic based on time of day */}
-      <ambientLight intensity={ambientIntensity} color={lightColor} />
+      <ambientLight intensity={ambientIntensity} color={sceneColors.light} />
       <directionalLight
         position={[6, 10, 8]}
         intensity={mainLightIntensity}
-        color={lightColor}
-        castShadow
+        color={sceneColors.light}
+        castShadow={!isNight}
         shadow-mapSize={[2048, 2048]}
         shadow-camera-left={-maxDim * 2.5}
         shadow-camera-right={maxDim * 2.5}
@@ -911,15 +1086,37 @@ function Scene() {
         shadow-camera-bottom={-maxDim * 2.5}
         shadow-bias={-0.0001}
       />
-      <directionalLight position={[-4, 6, -3]} intensity={fillLightIntensity} color={fillLightColor} />
-      <pointLight position={[0, 2, 0]} intensity={pointLightIntensity} color={lightColor} distance={6} />
-      <hemisphereLight args={[lightColor, isNight ? "#1a1e2a" : "#d8d8d8", hemisphereIntensity]} />
-
-      {/* Background - dynamic based on time of day */}
-      <color attach="background" args={[backgroundColor]} />
+      <directionalLight
+        position={[-4, 6, -3]}
+        intensity={fillLightIntensity}
+        color={sceneColors.fill}
+      />
+      {!isNight ? (
+        <pointLight
+          position={[0, 2, 0]}
+          intensity={pointLightIntensity}
+          color={sceneColors.light}
+          distance={6}
+        />
+      ) : (
+        <pointLight
+          position={[0, 3, 0]}
+          intensity={pointLightIntensity}
+          color={sceneColors.light}
+          distance={maxDim * 4}
+          decay={2}
+        />
+      )}
+      <hemisphereLight
+        args={
+          isNight
+            ? [sceneColors.background, sceneColors.ground, hemisphereIntensity]
+            : [sceneColors.light, sceneColors.ground, hemisphereIntensity]
+        }
+      />
 
       {/* Balcony */}
-      <SmartWallsBalcony width={roomW} depth={roomD} />
+      <SmartWallsBalcony width={roomW} depth={roomD} isNight={isNight} />
 
       {/* Products */}
       {items.map((item) => {
@@ -946,23 +1143,36 @@ function Scene() {
 }
 
 function SnapshotCapture({ onReady }: { onReady: (fn: () => string) => void }) {
-  const { gl } = useThree();
+  const { gl, scene, invalidate } = useThree();
+  const balconyWidthCm = useDesignerStore((state) => state.balconyWidthCm);
+  const balconyHeightCm = useDesignerStore((state) => state.balconyHeightCm);
+
   useEffect(() => {
     onReady(() => {
-      gl.render(gl.getRenderTarget() as any, null as any);
-      return gl.domElement.toDataURL("image/jpeg", 0.8);
+      invalidate();
+      const roomW = balconyWidthCm * CM;
+      const roomD = balconyHeightCm * CM;
+      return captureIsometricSnapshot(gl, scene, roomW, roomD);
     });
-  }, [gl, onReady]);
+  }, [gl, scene, invalidate, onReady, balconyWidthCm, balconyHeightCm]);
+
   return null;
 }
 
-export function IsometricScene({ onSnapshotReady }: { onSnapshotReady?: (fn: () => string) => void }) {
+export function IsometricScene({
+  onSnapshotReady,
+  frameloop = "always",
+}: {
+  onSnapshotReady?: (fn: () => string) => void;
+  frameloop?: "always" | "demand" | "never";
+}) {
   return (
-    <div className="w-full h-full">
+    <div className="h-full w-full">
       <Canvas
         shadows
+        frameloop={frameloop}
         gl={{ antialias: true, alpha: false, preserveDrawingBuffer: true }}
-        camera={{ 
+        camera={{
           position: [6, 5, 6],
           fov: 50,
         }}

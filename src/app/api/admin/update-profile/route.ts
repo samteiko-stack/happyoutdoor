@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server.server";
 
 export async function PUT(req: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient } from "@/lib/supabase/server.server";
 import { mapProfile } from "@/lib/mappers";
 
 export async function GET() {
@@ -96,6 +96,7 @@ export async function PUT(req: NextRequest) {
     const profileUpdate: Record<string, unknown> = {};
     if (name !== undefined) profileUpdate.name = name;
     if (email !== undefined) profileUpdate.email = email;
+    // role is never user-writable — enforced in DB trigger + admin-only APIs
 
     if (email || name) {
       await admin.auth.admin.updateUserById(session.user.id, {

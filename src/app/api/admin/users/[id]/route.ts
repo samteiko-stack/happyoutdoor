@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapProfile } from "@/lib/mappers";
 
@@ -15,6 +15,10 @@ export async function PUT(
 
     const { id } = await params;
     const body = await req.json();
+
+    if (id === session.user.id && body.role?.toUpperCase() !== session.user.role) {
+      return NextResponse.json({ error: "Cannot change your own role" }, { status: 400 });
+    }
 
     if (body.role === undefined) {
       return NextResponse.json({ error: "Role is required" }, { status: 400 });

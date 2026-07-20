@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapTemplate } from "@/lib/mappers";
 
@@ -24,7 +24,9 @@ export async function PUT(
     if (body.balconyHeightCm !== undefined) updateData.balcony_height_cm = body.balconyHeightCm;
     if (body.layoutData !== undefined) updateData.layout_data = body.layoutData;
     if (body.isPublished !== undefined) updateData.is_published = body.isPublished;
-    if (body.thumbnailUrl) updateData.thumbnail_url = body.thumbnailUrl;
+    if (body.thumbnailUrl !== undefined && body.thumbnailUrl) {
+      updateData.thumbnail_url = body.thumbnailUrl;
+    }
 
     const { data, error } = await admin
       .from("templates")

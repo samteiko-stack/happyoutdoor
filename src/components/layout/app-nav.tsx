@@ -32,7 +32,7 @@ export function AppNav({
       className={cn(
         "border-b border-border z-50",
         sticky && "sticky top-0",
-        blur ? "bg-surface-nav backdrop-blur-md" : "bg-card shadow-sm",
+        blur ? "bg-surface-nav backdrop-blur-md" : "bg-card",
         className
       )}
     >
@@ -43,7 +43,7 @@ export function AppNav({
         )}
       >
         <div className="flex items-center gap-3 min-w-0">
-          <Link href="/" className="text-brand shrink-0 hover:text-primary/80 transition-colors">
+          <Link href="/dashboard" className="text-brand shrink-0 hover:text-primary/80 transition-colors">
             Happy Outdoor
           </Link>
           {breadcrumbs && (

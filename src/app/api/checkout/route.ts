@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { stripe } from "@/lib/stripe";
+import {
+  getDesignOwnedByUser,
+  notFoundResponse,
+} from "@/lib/authorization";
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,14 +22,10 @@ export async function POST(req: NextRequest) {
     }
 
     const admin = createAdminClient();
-    const { data: design } = await admin
-      .from("designs")
-      .select("*")
-      .eq("id", designId)
-      .single();
+    const design = await getDesignOwnedByUser(designId, session.user.id);
 
-    if (!design || design.user_id !== session.user.id) {
-      return NextResponse.json({ error: "Design not found" }, { status: 404 });
+    if (!design) {
+      return notFoundResponse();
     }
 
     if (design.is_paid) {

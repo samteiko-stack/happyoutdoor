@@ -1,39 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapDesign } from "@/lib/mappers";
+import {
+  forbiddenResponse,
+  getDesignOwnedByUser,
+  isFreeUnlockAllowed,
+  notFoundResponse,
+  unauthorizedResponse,
+} from "@/lib/authorization";
 
 export async function POST(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await auth();
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!isFreeUnlockAllowed()) {
+      return forbiddenResponse();
     }
+
+    const session = await auth();
+    if (!session?.user?.id) return unauthorizedResponse();
 
     const { id } = await params;
+    const design = await getDesignOwnedByUser(id, session.user.id);
+    if (!design) return notFoundResponse();
+
     const admin = createAdminClient();
-
-    const { data: design } = await admin
-      .from("designs")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (!design) {
-      return NextResponse.json({ error: "Design not found" }, { status: 404 });
-    }
-
-    if (design.user_id !== session.user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
     const { data: updated, error } = await admin
       .from("designs")
       .update({ is_paid: true })
       .eq("id", id)
+      .eq("user_id", session.user.id)
       .select("*")
       .single();
 

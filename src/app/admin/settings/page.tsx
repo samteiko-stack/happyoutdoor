@@ -1,18 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { TableCell } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Plus, Trash, User, WarningTriangle } from "iconoir-react";
-import { AdminPageHeader } from "@/components/admin";
+import { Plus, User, AlertTriangle } from "lucide-react";
+import { PageStack } from "@/components/layout";
+import { DataTableCard, RowActions, TableRowDefault, TableCellActions, useTablePagination } from "@/components/admin";
 import { useAuth } from "@/components/providers/SupabaseProvider";
 
 interface Admin {
@@ -44,6 +44,19 @@ export default function AdminSettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [updatingProfile, setUpdatingProfile] = useState(false);
   const [updatingPassword, setUpdatingPassword] = useState(false);
+  const [adminSearch, setAdminSearch] = useState("");
+
+  const filteredAdmins = useMemo(() => {
+    if (!adminSearch) return admins;
+    const q = adminSearch.toLowerCase();
+    return admins.filter(
+      (a) =>
+        a.email.toLowerCase().includes(q) ||
+        a.name?.toLowerCase().includes(q)
+    );
+  }, [admins, adminSearch]);
+
+  const adminPagination = useTablePagination(filteredAdmins);
 
   useEffect(() => {
     loadData();
@@ -235,11 +248,7 @@ export default function AdminSettingsPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <AdminPageHeader
-        title="Admin Settings"
-        description="Manage administrators and your account settings"
-      />
+    <PageStack>
 
       {/* My Profile */}
       <Card>
@@ -326,145 +335,130 @@ export default function AdminSettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Manage Admins */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>Administrators</CardTitle>
-              <CardDescription>Manage admin users for the platform</CardDescription>
-            </div>
-            <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
-              <DialogTrigger asChild>
-                <Button>
-                  <Plus width={16} height={16} className="mr-2" />
-                  Add Admin
-                </Button>
-              </DialogTrigger>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add New Administrator</DialogTitle>
-                  <DialogDescription>
-                    Create a new admin account. They will receive an email to set their password.
-                  </DialogDescription>
-                </DialogHeader>
-                
-                {/* Warning Banner */}
-                <div className="bg-destructive/10 border border-destructive/20 rounded p-4 flex gap-3">
-                  <WarningTriangle width={20} height={20} className="text-destructive flex-shrink-0 mt-0.5" />
-                  <div className="text-sm">
-                    <p className="font-semibold text-destructive mb-1">Admin Access Warning</p>
-                    <p className="text-muted-foreground">
-                      Admins have full access to manage products, categories, templates, users, and all platform settings. Only grant admin access to trusted individuals.
-                    </p>
-                  </div>
+      <DataTableCard
+        columns={["Name", "Email", "Added", "Status", ""]}
+        isEmpty={filteredAdmins.length === 0}
+        emptyMessage={adminSearch ? "No administrators match your search" : "No administrators"}
+        searchValue={adminSearch}
+        onSearchChange={setAdminSearch}
+        searchPlaceholder="Search administrators…"
+        selectable={false}
+        primaryAction={
+          <Dialog open={addDialogOpen} onOpenChange={setAddDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus width={16} height={16} className="mr-2" />
+                Add admin
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Add administrator</DialogTitle>
+                <DialogDescription>
+                  Create a new admin account. They will receive an email to set their password.
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="flex gap-3 rounded-md border border-destructive/20 bg-destructive/10 p-4">
+                <AlertTriangle width={20} height={20} className="mt-0.5 shrink-0 text-destructive" />
+                <p className="text-sm text-muted-foreground">
+                  Admins can manage products, categories, templates, users, and settings.
+                </p>
+              </div>
+
+              <div className="space-y-4 py-2">
+                <div className="space-y-2">
+                  <Label htmlFor="new-admin-email">Email *</Label>
+                  <Input
+                    id="new-admin-email"
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    placeholder="admin@example.com"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="new-admin-name">Name (optional)</Label>
+                  <Input
+                    id="new-admin-name"
+                    value={newAdminName}
+                    onChange={(e) => setNewAdminName(e.target.value)}
+                    placeholder="Admin name"
+                  />
                 </div>
 
-                <div className="space-y-4 py-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="new-admin-email">Email *</Label>
-                    <Input
-                      id="new-admin-email"
-                      type="email"
-                      value={newAdminEmail}
-                      onChange={(e) => setNewAdminEmail(e.target.value)}
-                      placeholder="admin@example.com"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="new-admin-name">Name (optional)</Label>
-                    <Input
-                      id="new-admin-name"
-                      value={newAdminName}
-                      onChange={(e) => setNewAdminName(e.target.value)}
-                      placeholder="Admin Name"
-                    />
-                  </div>
-
-                  {/* Confirmation Checkbox */}
-                  <div className="flex items-start gap-3 p-3 bg-muted/50 rounded border border-border">
-                    <Switch
-                      id="confirm-admin"
-                      checked={confirmAdminAdd}
-                      onCheckedChange={setConfirmAdminAdd}
-                    />
-                    <div className="flex-1">
-                      <Label htmlFor="confirm-admin" className="cursor-pointer font-semibold text-sm">
-                        I confirm this person should have full admin access
-                      </Label>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        This user will be able to manage all aspects of the platform
-                      </p>
-                    </div>
-                  </div>
+                <div className="flex items-start gap-3 rounded-md border border-border bg-muted/50 p-3">
+                  <Switch
+                    id="confirm-admin"
+                    checked={confirmAdminAdd}
+                    onCheckedChange={setConfirmAdminAdd}
+                  />
+                  <Label htmlFor="confirm-admin" className="cursor-pointer text-sm font-medium">
+                    I confirm this person should have admin access
+                  </Label>
                 </div>
-                
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => {
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => {
                     setAddDialogOpen(false);
                     setConfirmAdminAdd(false);
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleAddAdmin}
-                    disabled={addingAdmin || !confirmAdminAdd}
-                  >
-                    {addingAdmin ? "Adding..." : "Add Admin"}
-                  </Button>
-                </DialogFooter>
-              </DialogContent>
-            </Dialog>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Added</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {admins.map((admin) => (
-                <TableRow key={admin.id}>
-                  <TableCell className="font-medium">
-                    <div className="flex items-center gap-2">
-                      <User width={16} height={16} className="text-muted-foreground" />
-                      {admin.name || "—"}
-                      {admin.id === currentUser?.id && (
-                        <Badge variant="secondary" className="ml-2">You</Badge>
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell>{admin.email}</TableCell>
-                  <TableCell className="text-sm text-muted-foreground">
-                    {new Date(admin.createdAt).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <Badge className="bg-primary">Admin</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    {admin.id !== currentUser?.id && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveAdmin(admin.id)}
-                        className="text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                      >
-                        <Trash width={16} height={16} />
-                      </Button>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleAddAdmin} disabled={addingAdmin || !confirmAdminAdd}>
+                  {addingAdmin ? "Adding…" : "Add admin"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        }
+        footer={{
+          total: adminPagination.total,
+          page: adminPagination.page,
+          pageSize: adminPagination.pageSize,
+          onPageChange: adminPagination.setPage,
+          onPageSizeChange: adminPagination.setPageSize,
+        }}
+      >
+        {adminPagination.pagedItems.map((admin) => (
+          <TableRowDefault key={admin.id}>
+            <TableCell className="font-medium text-foreground">
+              <div className="flex items-center gap-2">
+                <User width={16} height={16} className="text-muted-foreground" />
+                {admin.name || "—"}
+                {admin.id === currentUser?.id && (
+                  <Badge variant="secondary">You</Badge>
+                )}
+              </div>
+            </TableCell>
+            <TableCell className="text-muted-foreground">{admin.email}</TableCell>
+            <TableCell className="text-muted-foreground">
+              {new Date(admin.createdAt).toLocaleDateString()}
+            </TableCell>
+            <TableCell>
+              <Badge variant="secondary">Admin</Badge>
+            </TableCell>
+            <TableCellActions>
+              {admin.id !== currentUser?.id && (
+                <RowActions
+                  items={[
+                    {
+                      label: "Remove admin",
+                      icon: "delete",
+                      destructive: true,
+                      onClick: () => handleRemoveAdmin(admin.id),
+                    },
+                  ]}
+                />
+              )}
+            </TableCellActions>
+          </TableRowDefault>
+        ))}
+      </DataTableCard>
+    </PageStack>
   );
 }

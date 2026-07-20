@@ -1,9 +1,20 @@
 "use client";
 
 import { useSession } from "@/components/providers/SupabaseProvider";
-import { createClient } from "@/lib/supabase/client";
 import Link from "next/link";
-import { MediaImageList, DesignPencil, Settings, ViewGrid, LogOut, NavArrowDown } from "iconoir-react";
+import {
+  Images,
+  Pencil,
+  Settings,
+  LogOut,
+  LayoutGrid,
+  ChevronDown,
+  Package,
+  Folder,
+  Files,
+  Users,
+  Shield,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -13,102 +24,195 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { UserAvatar } from "@/components/user-avatar";
+import { cn } from "@/lib/utils";
 
-export function UserMenu() {
+interface UserMenuProps {
+  variant?: "icon" | "bar" | "sidebar";
+  className?: string;
+  onNavigate?: (href: string) => void;
+}
+
+function MenuNavItem({
+  href,
+  onNavigate,
+  children,
+}: {
+  href: string;
+  onNavigate?: (href: string) => void;
+  children: React.ReactNode;
+}) {
+  if (onNavigate) {
+    return (
+      <DropdownMenuItem
+        className="cursor-pointer"
+        onClick={() => onNavigate(href)}
+      >
+        {children}
+      </DropdownMenuItem>
+    );
+  }
+
+  return (
+    <DropdownMenuItem asChild>
+      <Link href={href} className="cursor-pointer">
+        {children}
+      </Link>
+    </DropdownMenuItem>
+  );
+}
+
+export function UserMenu({ variant = "icon", className, onNavigate }: UserMenuProps) {
   const { data: session, status } = useSession();
 
   if (status === "loading") {
-    return <div className="w-8 h-8 rounded bg-muted animate-pulse" />;
+    return (
+      <div
+        className={cn(
+          variant === "sidebar" ? "h-12 w-full animate-pulse rounded-lg bg-white/10" : "size-9 animate-pulse rounded-md bg-muted",
+          className
+        )}
+      />
+    );
   }
 
   if (!session) {
     return (
-      <div className="flex items-center gap-2">
+      <div className={cn("button-group", className)}>
         <Link href="/login">
-          <Button variant="ghost" size="sm">Sign In</Button>
+          <Button variant="ghost" size="sm">
+            Sign in
+          </Button>
         </Link>
         <Link href="/register">
-          <Button size="sm">
-            Get Started
-          </Button>
+          <Button size="sm">Get started</Button>
         </Link>
       </div>
     );
   }
 
   const user = session.user;
-  const initials = user.name
-    ? user.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
-    : user.email?.charAt(0).toUpperCase() || "U";
-  const isAdmin = (user as { role?: string }).role?.toUpperCase() === "ADMIN";
-
-  // Generate a cute avatar based on user's email for consistency
-  const avatarSeed = user.email || user.name || "default";
-  const avatarUrl = `https://api.dicebear.com/7.x/notionists/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=cadc82,a7b500,faf8ea&radius=50`;
+  const isAdmin = user.role?.toUpperCase() === "ADMIN";
+  const roleLabel = isAdmin ? "Admin" : "User";
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 rounded hover:opacity-80 transition-opacity focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarUrl} alt={user.name || "User"} />
-            <AvatarFallback className="bg-accent/10 text-primary text-xs font-semibold">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <span className="text-sm font-medium hidden sm:inline-block max-w-[120px] truncate">
-            {user.name || user.email}
-          </span>
-          <NavArrowDown width={14} height={14} className="text-muted-foreground" />
-        </button>
+        {variant === "bar" ? (
+          <Button
+            variant="ghost"
+            className={cn(
+              "motion-interactive h-auto items-center justify-start gap-2 px-0 hover:bg-transparent active:scale-100 data-[state=open]:opacity-80",
+              className
+            )}
+          >
+            <UserAvatar id={user.id} name={user.name} email={user.email} className="shrink-0" />
+            <div className="hidden min-w-0 flex-col justify-center gap-0.5 text-left lg:flex">
+              <span className="truncate text-xs font-medium leading-none text-foreground">
+                {user.name || "User"}
+              </span>
+              <span className="truncate text-[11px] leading-none text-muted-foreground">{roleLabel}</span>
+            </div>
+            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+          </Button>
+        ) : variant === "sidebar" ? (
+          <Button
+            variant="ghost"
+            className={cn(
+              "motion-interactive h-auto w-full justify-start gap-2.5 rounded-lg px-2.5 py-2 text-sidebar-foreground hover:bg-white/10 active:scale-100 data-[state=open]:bg-white/10",
+              className
+            )}
+          >
+            <UserAvatar id={user.id} name={user.name} email={user.email} className="shrink-0" />
+            <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5 text-left">
+              <span className="truncate text-sm font-medium leading-none text-sidebar-foreground">
+                {user.name || "User"}
+              </span>
+              <span className="truncate text-xs leading-none text-sidebar-muted-foreground">{roleLabel}</span>
+            </div>
+            <ChevronDown className="size-4 shrink-0 text-sidebar-muted-foreground" />
+          </Button>
+        ) : (
+          <Button variant="ghost" size="icon" className={cn("active:scale-100 focus-visible:ring-ring", className)}>
+            <UserAvatar id={user.id} name={user.name} email={user.email} size="default" className="size-9" />
+          </Button>
+        )}
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent
+        align={variant === "sidebar" ? "start" : "end"}
+        side={variant === "sidebar" ? "top" : "bottom"}
+        className="w-56"
+      >
         <DropdownMenuLabel>
           <div className="flex flex-col">
             <span className="font-medium">{user.name || "User"}</span>
-            <span className="text-xs text-muted-foreground font-normal">{user.email}</span>
+            <span className="text-xs font-normal text-muted-foreground">{user.email}</span>
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/designs" className="cursor-pointer">
-            <MediaImageList width={16} height={16} className="mr-2" />
-            My Designs
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem asChild>
-          <Link href="/designer" className="cursor-pointer">
-            <DesignPencil width={16} height={16} className="mr-2" />
-            New Design
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer">
-            <Settings width={16} height={16} className="mr-2" />
-            Settings
-          </Link>
-        </DropdownMenuItem>
-        {isAdmin && (
-          <DropdownMenuItem asChild>
-            <Link href="/admin" className="cursor-pointer">
-              <ViewGrid width={16} height={16} className="mr-2" />
-              Admin Dashboard
-            </Link>
-          </DropdownMenuItem>
+        {isAdmin ? (
+          <>
+            <MenuNavItem href="/admin" onNavigate={onNavigate}>
+              <LayoutGrid className="size-4" />
+              Overview
+            </MenuNavItem>
+            <MenuNavItem href="/admin/products" onNavigate={onNavigate}>
+              <Package className="size-4" />
+              Products
+            </MenuNavItem>
+            <MenuNavItem href="/admin/categories" onNavigate={onNavigate}>
+              <Folder className="size-4" />
+              Categories
+            </MenuNavItem>
+            <MenuNavItem href="/admin/templates" onNavigate={onNavigate}>
+              <Files className="size-4" />
+              Templates
+            </MenuNavItem>
+            <MenuNavItem href="/admin/users" onNavigate={onNavigate}>
+              <Users className="size-4" />
+              Users
+            </MenuNavItem>
+            <DropdownMenuSeparator />
+            <MenuNavItem href="/admin/settings" onNavigate={onNavigate}>
+              <Shield className="size-4" />
+              Admin settings
+            </MenuNavItem>
+          </>
+        ) : (
+          <>
+            <MenuNavItem href="/dashboard" onNavigate={onNavigate}>
+              <LayoutGrid className="size-4" />
+              Overview
+            </MenuNavItem>
+            <MenuNavItem href="/designs" onNavigate={onNavigate}>
+              <Images className="size-4" />
+              My designs
+            </MenuNavItem>
+            <MenuNavItem href="/designer" onNavigate={onNavigate}>
+              <Pencil className="size-4" />
+              New design
+            </MenuNavItem>
+            <DropdownMenuSeparator />
+            <MenuNavItem href="/settings" onNavigate={onNavigate}>
+              <Settings className="size-4" />
+              Settings
+            </MenuNavItem>
+          </>
         )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          variant="destructive"
           onClick={async () => {
-            const supabase = createClient();
-            await supabase.auth.signOut();
-            window.location.href = "/login";
+            await fetch("/api/auth/signout", {
+              method: "POST",
+              credentials: "include",
+            });
+            window.location.replace("/login");
           }}
-          className="cursor-pointer text-destructive focus:text-destructive"
+          className="cursor-pointer"
         >
-          <LogOut width={16} height={16} className="mr-2" />
-          Sign Out
+          <LogOut className="size-4" />
+          Sign out
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

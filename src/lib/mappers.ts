@@ -134,7 +134,7 @@ export function toDbDesign(data: Record<string, unknown>, userId?: string) {
         ? data.layoutData
         : JSON.stringify(data.layoutData ?? []),
     thumbnail_url: data.thumbnailUrl ?? null,
-    is_paid: data.isPaid ?? false,
+    is_paid: false,
   };
 }
 

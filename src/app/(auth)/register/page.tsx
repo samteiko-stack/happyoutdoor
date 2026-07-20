@@ -1,13 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AuthFormCard,
+  AuthFormFields,
+  AuthFormActions,
+  AuthFooterText,
+  AuthLink,
+  AuthField,
+  AuthPasswordField,
+} from "@/components/auth";
 import { createClient } from "@/lib/supabase/client";
 import { useSession } from "@/components/providers/SupabaseProvider";
 
@@ -16,16 +21,11 @@ export default function RegisterPage() {
   const { data: session, status } = useSession();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
 
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       const userRole = session.user.role?.toUpperCase();
-      if (userRole === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
+      router.push(userRole === "ADMIN" ? "/admin" : "/dashboard");
     }
   }, [status, session, router]);
 
@@ -35,26 +35,33 @@ export default function RegisterPage() {
     setError("");
 
     const formData = new FormData(e.currentTarget);
-    const name = formData.get("name") as string;
-    const email = formData.get("email") as string;
+    const name = (formData.get("name") as string).trim();
+    const email = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
 
     if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+      setError("Password must be at least 6 characters.");
       setLoading(false);
       return;
     }
 
-    const { error: signUpError } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { name },
-      },
-    });
+    try {
+      const supabase = createClient();
+      const { error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { name },
+        },
+      });
 
-    if (signUpError) {
-      setError(signUpError.message);
+      if (signUpError) {
+        setError(signUpError.message);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Can't reach the server. Check your connection and try again.");
       setLoading(false);
       return;
     }
@@ -63,46 +70,57 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <p className="text-xl font-bold text-primary mb-2">Happy Outdoor</p>
-          <CardTitle className="text-2xl font-bold">Create Account</CardTitle>
-          <CardDescription>Start designing your dream balcony</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" name="name" type="text" placeholder="Your name" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" placeholder="At least 6 characters" required />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3 pt-6">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Creating account..." : "Create Account"}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link href="/login" className="text-primary hover:underline font-medium">
-                Sign in
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+    <AuthFormCard
+      title="Create account"
+      description="Start designing your balcony."
+    >
+      <form onSubmit={handleSubmit}>
+        <AuthFormFields>
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <AuthField
+            id="name"
+            name="name"
+            type="text"
+            label="Full name"
+            placeholder="Jane Smith"
+            autoComplete="name"
+          />
+          <AuthField
+            id="email"
+            name="email"
+            type="email"
+            label="Email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+          />
+          <AuthPasswordField
+            id="password"
+            name="password"
+            label="Password"
+            placeholder="At least 6 characters"
+            autoComplete="new-password"
+            required
+          />
+        </AuthFormFields>
+        <AuthFormActions>
+          <Button
+            type="submit"
+            className="h-12 w-full text-base font-semibold"
+            shape="pill"
+            disabled={loading}
+          >
+            {loading ? "Creating account…" : "Sign up"}
+          </Button>
+          <AuthFooterText>
+            Already have an account? <AuthLink href="/login">Log in</AuthLink>
+          </AuthFooterText>
+        </AuthFormActions>
+      </form>
+    </AuthFormCard>
   );
 }

@@ -105,12 +105,38 @@ interface DesignerState {
   // Design metadata
   designId: string | null;
   designName: string;
+  sourceTemplateId: string | null;
   setDesignId: (id: string | null) => void;
   setDesignName: (name: string) => void;
+  setSourceTemplateId: (id: string | null) => void;
 
   // Zoom
   zoom: number;
   setZoom: (zoom: number) => void;
+  /** When true, plan canvas auto-fits to the container. Demo mode sets false to drive zoom. */
+  zoomAutoFit: boolean;
+  setZoomAutoFit: (enabled: boolean) => void;
+
+  /**
+   * Optional camera focus for landing demo / guided views.
+   * When set, the 3D scene smoothly pans/zooms toward the target.
+   */
+  cameraFocus: {
+    target: [number, number, number];
+    distance: number;
+    /** Relative yaw orbit (radians) applied once when focus is set. */
+    orbitDelta?: number;
+    /** Absolute yaw (radians) — keeps camera on the product front as it rotates. */
+    absoluteTheta?: number;
+  } | null;
+  setCameraFocus: (
+    focus: {
+      target: [number, number, number];
+      distance: number;
+      orbitDelta?: number;
+      absoluteTheta?: number;
+    } | null
+  ) => void;
 }
 
 export const useDesignerStore = create<DesignerState>((set, get) => ({
@@ -193,7 +219,10 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
     set({
       items: state.items.map((item) =>
         item.id === state.selectedItemId
-          ? { ...item, rotation: (item.rotation + degrees) % 360 }
+          ? {
+              ...item,
+              rotation: ((item.rotation + degrees) % 360 + 360) % 360,
+            }
           : item
       ),
     });
@@ -243,9 +272,16 @@ export const useDesignerStore = create<DesignerState>((set, get) => ({
 
   designId: null,
   designName: "My Balcony Design",
+  sourceTemplateId: null,
   setDesignId: (id) => set({ designId: id }),
   setDesignName: (name) => set({ designName: name }),
+  setSourceTemplateId: (id) => set({ sourceTemplateId: id }),
 
   zoom: 1,
   setZoom: (zoom) => set({ zoom: Math.max(0.3, Math.min(3, zoom)) }),
+  zoomAutoFit: true,
+  setZoomAutoFit: (enabled) => set({ zoomAutoFit: enabled }),
+
+  cameraFocus: null,
+  setCameraFocus: (focus) => set({ cameraFocus: focus }),
 }));

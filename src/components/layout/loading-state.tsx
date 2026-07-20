@@ -3,11 +3,22 @@ import { cn } from "@/lib/utils";
 interface LoadingStateProps {
   message?: string;
   className?: string;
+  fullScreen?: boolean;
 }
 
-export function LoadingState({ message = "Loading...", className }: LoadingStateProps) {
+export function LoadingState({
+  message = "Loading...",
+  className,
+  fullScreen = false,
+}: LoadingStateProps) {
   return (
-    <div className={cn("min-h-screen flex items-center justify-center bg-background", className)}>
+    <div
+      className={cn(
+        "flex items-center justify-center",
+        fullScreen ? "min-h-screen bg-background" : "py-24",
+        className
+      )}
+    >
       <p className="text-muted-foreground">{message}</p>
     </div>
   );

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { WarningTriangle } from "iconoir-react";
+import { AlertTriangle } from "lucide-react";
 
 export function ScreenSizeWarning() {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
@@ -27,8 +27,8 @@ export function ScreenSizeWarning() {
       <div className="max-w-md mx-4 text-center space-y-6">
         {/* Icon */}
         <div className="flex justify-center">
-          <div className="rounded bg-accent/10 p-4">
-            <WarningTriangle width={48} height={48} className="text-accent" />
+          <div className="rounded bg-muted p-4">
+            <AlertTriangle width={48} height={48} className="text-accent" />
           </div>
         </div>
 

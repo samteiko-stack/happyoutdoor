@@ -1,21 +1,52 @@
 "use client";
 
+import type { LucideIcon } from "lucide-react";
+import {
+  Armchair,
+  Flower2,
+  Lamp,
+  Leaf,
+  Package,
+  Palette,
+  Plus,
+  Table2,
+  Trash2,
+} from "lucide-react";
 import { useDesignerStore } from "@/lib/designer-store";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
-import { Trash, Plus } from "iconoir-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
-// Icon mapping for categories
-const CATEGORY_ICONS: Record<string, string> = {
-  armchair: "🪑",
-  lamp: "💡",
-  leaf: "🌿",
-  flower: "🌸",
-  palette: "🎨",
-  table: "🪵",
+const CATEGORY_ICONS: Record<string, LucideIcon> = {
+  seating: Armchair,
+  tables: Table2,
+  lighting: Lamp,
+  plants: Leaf,
+  planters: Flower2,
+  decor: Palette,
 };
 
-export function ProductCatalog() {
+function CategoryIcon({ slug, icon }: { slug: string; icon: string | null }) {
+  const Icon = CATEGORY_ICONS[slug] ?? CATEGORY_ICONS[icon ?? ""] ?? Package;
+  return (
+    <span className="flex size-7 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-foreground">
+      <Icon className="size-3.5" strokeWidth={1.75} />
+    </span>
+  );
+}
+
+export function ProductCatalog({
+  defaultOpenAll = true,
+}: {
+  /** Landing demo starts collapsed so the cursor can open categories. */
+  defaultOpenAll?: boolean;
+}) {
   const {
     products,
     categories,
@@ -34,73 +65,76 @@ export function ProductCatalog() {
     }))
     .filter((group) => group.products.length > 0);
 
-  // Build items on canvas with product info
-  const canvasItems = items.map((item) => ({
-    ...item,
-    product: products.find((p) => p.id === item.productId),
-  })).filter((item) => item.product);
+  const canvasItems = items
+    .map((item) => ({
+      ...item,
+      product: products.find((p) => p.id === item.productId),
+    }))
+    .filter((item) => item.product);
 
   return (
-    <div className="h-full flex flex-col bg-white border-l">
-      {/* Product Catalog */}
-      <div className="p-3 border-b bg-background">
-        <h2 className="font-semibold text-sm">Add Products</h2>
-        <p className="text-[11px] text-muted-foreground mt-0.5">
-          Click to add to your balcony
-        </p>
+    <aside className="designer-catalog" data-demo-panel="catalog">
+      <div className="designer-catalog-header">
+        <h2 className="designer-catalog-title">Catalog</h2>
+        <p className="designer-catalog-subtitle">Tap to place on balcony</p>
       </div>
 
-      <div className="flex-1 overflow-y-auto min-h-0">
-        <Accordion type="multiple" defaultValue={categories.map((c) => c.id)}>
+      <div className="min-h-0 flex-1 overflow-y-auto" data-demo="catalog-scroll">
+        <Accordion
+          type="multiple"
+          defaultValue={defaultOpenAll ? categories.map((c) => c.id) : []}
+        >
           {groupedProducts.map((group) => (
-            <AccordionItem key={group.id} value={group.id}>
-              <AccordionTrigger className="px-3 py-2.5 hover:bg-gray-50 text-sm">
-                <span className="flex items-center gap-2">
-                  <span className="text-base">
-                    {CATEGORY_ICONS[group.icon || ""] || "📦"}
-                  </span>
-                  <span className="font-medium text-sm">{group.name}</span>
-                  <Badge variant="secondary" className="ml-1 text-[10px] px-1.5 py-0">
+            <AccordionItem key={group.id} value={group.id} className="border-border/70">
+              <AccordionTrigger
+                className="designer-catalog-trigger px-4 py-3 hover:no-underline"
+                data-demo="catalog-category"
+                data-demo-id={group.id}
+              >
+                <span className="flex items-center gap-2.5">
+                  <CategoryIcon slug={group.slug} icon={group.icon} />
+                  <span className="text-sm font-medium">{group.name}</span>
+                  <Badge variant="secondary" className="ml-auto mr-1 tabular-nums">
                     {group.products.length}
                   </Badge>
                 </span>
               </AccordionTrigger>
-              <AccordionContent className="px-2 pb-1">
-                <div className="space-y-0.5">
+              <AccordionContent className="px-3 pb-2 pt-0">
+                <div className="space-y-1.5">
                   {group.products.map((product) => (
                     <button
                       key={product.id}
+                      type="button"
                       onClick={() => quickAddProduct(product.id)}
-                      className="w-full text-left p-2 rounded transition-all hover:bg-secondary/20 border border-transparent hover:border-secondary group"
+                      className="designer-product-card group"
+                      data-demo="catalog-product"
+                      data-demo-id={product.id}
                     >
-                      <div className="flex items-center gap-2.5">
-                        {/* Thumbnail */}
-                        <div className="w-10 h-10 rounded-md overflow-hidden bg-secondary/20 flex-shrink-0">
-                          {product.imageUrl ? (
-                            <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="w-full h-full object-contain"
-                            />
-                          ) : (
-                            <div className="w-full h-full flex items-center justify-center text-[9px] text-muted-foreground">
-                              No img
-                            </div>
-                          )}
-                        </div>
-                        {/* Info */}
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-xs truncate">{product.name}</p>
-                          <p className="text-[10px] text-muted-foreground">
-                            {product.widthCm}x{product.heightCm}cm · ${product.price.toFixed(2)}
-                          </p>
-                        </div>
-                        {/* Add icon */}
-                        <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                          <div className="w-6 h-6 rounded bg-primary flex items-center justify-center">
-                            <Plus width={12} height={12} className="text-primary-foreground" />
-                          </div>
-                        </div>
+                      <div className="designer-product-thumb">
+                        {product.imageUrl ? (
+                          <img
+                            src={product.imageUrl}
+                            alt={product.name}
+                            className="size-full object-contain p-1"
+                          />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">
+                            {product.name.charAt(0)}
+                          </span>
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1 text-left">
+                        <p className="truncate text-sm font-medium text-foreground">
+                          {product.name}
+                        </p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
+                          {product.widthCm}×{product.heightCm} cm
+                        </p>
+                      </div>
+                      <div className="flex shrink-0 items-center">
+                        <span className="flex size-6 items-center justify-center rounded-md bg-foreground text-background opacity-0 transition-opacity group-hover:opacity-100">
+                          <Plus className="size-3.5" strokeWidth={2} />
+                        </span>
                       </div>
                     </button>
                   ))}
@@ -111,82 +145,71 @@ export function ProductCatalog() {
         </Accordion>
       </div>
 
-      {/* Items on Canvas */}
-      <div className="border-t flex-shrink-0" style={{ maxHeight: "40%" }}>
-        <div className="p-3 bg-background border-b">
-          <div className="flex items-center justify-between">
-            <h2 className="font-semibold text-sm">On Canvas</h2>
-            <Badge variant="secondary" className="text-[10px]">
-              {canvasItems.length}
-            </Badge>
-          </div>
+      <div className="designer-catalog-footer">
+        <div className="flex items-center justify-between px-4 py-3">
+          <h3 className="text-sm font-semibold text-foreground">On balcony</h3>
+          <Badge variant="secondary" className="tabular-nums">
+            {canvasItems.length}
+          </Badge>
         </div>
-        <div className="overflow-y-auto" style={{ maxHeight: "calc(100% - 44px)" }}>
+
+        <div className="max-h-52 overflow-y-auto px-3 pb-3">
           {canvasItems.length === 0 ? (
-            <div className="p-4 text-center">
-              <p className="text-xs text-muted-foreground">
-                No items yet. Click products above to add them.
-              </p>
-            </div>
+            <p className="rounded-lg border border-dashed border-border bg-muted/30 px-4 py-6 text-center text-xs text-muted-foreground">
+              Nothing placed yet
+            </p>
           ) : (
-            <div className="p-1.5 space-y-0.5">
+            <div className="space-y-1">
               {canvasItems.map((item) => (
                 <div
                   key={item.id}
-                  onClick={() => setSelectedItemId(selectedItemId === item.id ? null : item.id)}
-                  className={`flex items-center gap-2 p-2 rounded cursor-pointer transition-all ${
-                    selectedItemId === item.id
-                      ? "bg-secondary/20 border border-accent"
-                      : "hover:bg-gray-50 border border-transparent"
-                  }`}
+                  onClick={() =>
+                    setSelectedItemId(selectedItemId === item.id ? null : item.id)
+                  }
+                  data-demo="catalog-placed"
+                  data-demo-id={item.id}
+                  className={cn(
+                    "designer-canvas-item group",
+                    selectedItemId === item.id && "designer-canvas-item-selected"
+                  )}
                 >
-                  {/* Mini thumbnail */}
-                  <div className="w-8 h-8 rounded overflow-hidden bg-secondary/20 flex-shrink-0">
+                  <div className="designer-product-thumb size-9">
                     {item.product!.imageUrl ? (
                       <img
                         src={item.product!.imageUrl}
                         alt={item.product!.name}
-                        className="w-full h-full object-contain"
+                        className="size-full object-contain p-0.5"
                       />
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-[8px] text-muted-foreground">
+                      <span className="text-[10px] text-muted-foreground">
                         {item.product!.name.charAt(0)}
-                      </div>
+                      </span>
                     )}
                   </div>
-                  {/* Name */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{item.product!.name}</p>
-                    <p className="text-[10px] text-muted-foreground">
-                      ${item.product!.price.toFixed(2)}
-                    </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-medium">{item.product!.name}</p>
                   </div>
-                  {/* Delete */}
-                  <button
+                  <Button
+                    type="button"
+                    variant="ghost-destructive"
+                    size="icon-xs"
+                    className={cn(
+                      "shrink-0 opacity-0 transition-opacity group-hover:opacity-100",
+                      selectedItemId === item.id && "opacity-100"
+                    )}
                     onClick={(e) => {
                       e.stopPropagation();
                       deleteItem(item.id);
                     }}
-                    className="opacity-0 group-hover:opacity-100 hover:!opacity-100 p-1 rounded hover:bg-destructive/10 text-destructive transition-all flex-shrink-0"
-                    style={{ opacity: selectedItemId === item.id ? 1 : undefined }}
                   >
-                    <Trash width={12} height={12} />
-                  </button>
+                    <Trash2 className="size-3.5" />
+                  </Button>
                 </div>
               ))}
-              {/* Total */}
-              <div className="px-2 pt-2 pb-1 border-t mt-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-muted-foreground">Total</span>
-                  <span className="font-semibold text-foreground">
-                    ${canvasItems.reduce((sum, item) => sum + (item.product?.price || 0), 0).toFixed(2)}
-                  </span>
-                </div>
-              </div>
             </div>
           )}
         </div>
       </div>
-    </div>
+    </aside>
   );
 }

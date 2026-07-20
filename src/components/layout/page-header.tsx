@@ -32,7 +32,7 @@ export function PageHeader({
         <h1 className={cn(titleClasses[size], "mb-2")}>{title}</h1>
         {description && <p className="text-body-lg">{description}</p>}
       </div>
-      {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
+      {actions && <div className="button-group is-end shrink-0">{actions}</div>}
     </div>
   );
 }

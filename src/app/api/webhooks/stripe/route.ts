@@ -27,18 +27,35 @@ export async function POST(req: NextRequest) {
   if (event.type === "checkout.session.completed") {
     const session = event.data.object as Stripe.Checkout.Session;
     const designId = session.metadata?.designId;
+    const userId = session.metadata?.userId;
 
-    if (designId) {
+    if (designId && userId) {
       const admin = createAdminClient();
 
-      await admin.from("designs").update({ is_paid: true }).eq("id", designId);
+      const { data: design } = await admin
+        .from("designs")
+        .select("user_id")
+        .eq("id", designId)
+        .single();
+
+      if (!design || design.user_id !== userId) {
+        console.error("Webhook rejected: design/user mismatch", { designId, userId });
+        return NextResponse.json({ error: "Invalid metadata" }, { status: 400 });
+      }
+
+      await admin
+        .from("designs")
+        .update({ is_paid: true })
+        .eq("id", designId)
+        .eq("user_id", userId);
 
       await admin
         .from("payments")
         .update({ status: "completed" })
-        .eq("stripe_session_id", session.id);
+        .eq("stripe_session_id", session.id)
+        .eq("user_id", userId);
 
-      console.log(`Design ${designId} unlocked`);
+      console.log(`Design ${designId} unlocked for user ${userId}`);
     }
   }
 

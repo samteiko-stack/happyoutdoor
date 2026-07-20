@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { auth, isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapProfile } from "@/lib/mappers";
 

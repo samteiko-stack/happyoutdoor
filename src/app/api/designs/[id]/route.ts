@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth, isAdmin } from "@/lib/auth";
+import { auth, isAdmin } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { mapDesign } from "@/lib/mappers";
+import {
+  getDesignForUser,
+  getDesignOwnedByUser,
+  notFoundResponse,
+  pickUserDesignUpdate,
+  unauthorizedResponse,
+} from "@/lib/authorization";
+import { syncTemplateThumbnail } from "@/lib/sync-template-thumbnail";
 
 export async function GET(
   _req: NextRequest,
@@ -9,28 +17,13 @@ export async function GET(
 ) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const { id } = await params;
-    const admin = createAdminClient();
+    const design = await getDesignForUser(id, session.user);
+    if (!design) return notFoundResponse();
 
-    const { data, error } = await admin
-      .from("designs")
-      .select("*, templates(*)")
-      .eq("id", id)
-      .single();
-
-    if (error || !data) {
-      return NextResponse.json({ error: "Design not found" }, { status: 404 });
-    }
-
-    if (data.user_id !== session.user.id && !isAdmin(session.user)) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    return NextResponse.json(mapDesign(data, data.templates));
+    return NextResponse.json(mapDesign(design, design.templates));
   } catch (error) {
     console.error("GET design error:", error);
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
@@ -43,44 +36,35 @@ export async function PUT(
 ) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const { id } = await params;
+    const existing = await getDesignOwnedByUser(id, session.user.id);
+    if (!existing) return notFoundResponse();
+
     const body = await req.json();
+    const updateData = pickUserDesignUpdate(body);
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json(mapDesign(existing));
+    }
+
     const admin = createAdminClient();
-
-    const { data: existing } = await admin
-      .from("designs")
-      .select("*")
-      .eq("id", id)
-      .single();
-
-    if (!existing || existing.user_id !== session.user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const updateData: Record<string, unknown> = {};
-    if (body.name !== undefined) updateData.name = body.name;
-    if (body.balconyWidthCm !== undefined) updateData.balcony_width_cm = body.balconyWidthCm;
-    if (body.balconyHeightCm !== undefined) updateData.balcony_height_cm = body.balconyHeightCm;
-    if (body.layoutData !== undefined) {
-      updateData.layout_data =
-        typeof body.layoutData === "string"
-          ? body.layoutData
-          : JSON.stringify(body.layoutData);
-    }
-    if (body.thumbnailUrl) updateData.thumbnail_url = body.thumbnailUrl;
-
     const { data, error } = await admin
       .from("designs")
       .update(updateData)
       .eq("id", id)
+      .eq("user_id", session.user.id)
       .select("*")
       .single();
 
     if (error) throw error;
+
+    const templateId = existing.template_id as string | null;
+    if (templateId && body.thumbnailUrl) {
+      await syncTemplateThumbnail(admin, templateId, body.thumbnailUrl as string, {
+        isAdmin: isAdmin(session.user),
+      });
+    }
 
     return NextResponse.json(mapDesign(data));
   } catch {
@@ -94,24 +78,14 @@ export async function DELETE(
 ) {
   try {
     const session = await auth();
-    if (!session) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
+    if (!session) return unauthorizedResponse();
 
     const { id } = await params;
+    const existing = await getDesignOwnedByUser(id, session.user.id);
+    if (!existing) return notFoundResponse();
+
     const admin = createAdminClient();
-
-    const { data: existing } = await admin
-      .from("designs")
-      .select("user_id")
-      .eq("id", id)
-      .single();
-
-    if (!existing || existing.user_id !== session.user.id) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    await admin.from("designs").delete().eq("id", id);
+    await admin.from("designs").delete().eq("id", id).eq("user_id", session.user.id);
     return NextResponse.json({ success: true });
   } catch {
     return NextResponse.json({ error: "Something went wrong" }, { status: 500 });

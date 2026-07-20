@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/auth.server";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 export async function POST(req: NextRequest) {
@@ -15,22 +15,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
 
-    const path = `${Date.now()}-${session.user.id}.jpg`;
+    const path = `${session.user.id}/${Date.now()}.jpg`;
     const admin = createAdminClient();
     const buffer = Buffer.from(await file.arrayBuffer());
+    if (buffer.byteLength < 256) {
+      return NextResponse.json({ error: "Snapshot file is empty" }, { status: 400 });
+    }
 
     const { error } = await admin.storage.from("snapshots").upload(path, buffer, {
       contentType: "image/jpeg",
-      upsert: true,
+      upsert: false,
     });
 
-    if (error) throw error;
+    if (error) {
+      console.error("Supabase snapshot upload error:", error);
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
 
     const { data: urlData } = admin.storage.from("snapshots").getPublicUrl(path);
 
     return NextResponse.json({ url: urlData.publicUrl });
   } catch (error) {
     console.error("Snapshot upload error:", error);
-    return NextResponse.json({ url: null });
+    return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

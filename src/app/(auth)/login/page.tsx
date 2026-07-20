@@ -1,96 +1,198 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Logo } from "@/components/Logo";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import {
+  AuthFormCard,
+  AuthFormFields,
+  AuthFormActions,
+  AuthFooterText,
+  AuthLink,
+  AuthField,
+  AuthPasswordField,
+} from "@/components/auth";
 import { createClient } from "@/lib/supabase/client";
-import { useSession } from "@/components/providers/SupabaseProvider";
 
-export default function LoginPage() {
+const REMEMBER_KEY = "ho-remember-email";
+
+function LoginForm() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const supabase = createClient();
+  const [successMessage, setSuccessMessage] = useState("");
+  const [remember, setRemember] = useState(false);
+  const [email, setEmail] = useState("");
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
-      const userRole = session.user.role?.toUpperCase();
-      if (userRole === "ADMIN") {
-        router.push("/admin");
-      } else {
-        router.push("/dashboard");
-      }
+    const saved = localStorage.getItem(REMEMBER_KEY);
+    if (saved) {
+      setEmail(saved);
+      setRemember(true);
     }
-  }, [status, session, router]);
+    if (searchParams.get("reset") === "success") {
+      setSuccessMessage("Your password has been updated. Sign in with your new password.");
+    }
+    if (searchParams.get("error") === "auth") {
+      setError("Your sign-in link expired or is invalid. Please try again.");
+    }
+  }, [searchParams]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
     setError("");
+    setSuccessMessage("");
 
     const formData = new FormData(e.currentTarget);
-    const email = formData.get("email") as string;
+    const nextEmail = (formData.get("email") as string).trim();
     const password = formData.get("password") as string;
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    if (!nextEmail || !password) {
+      setError("Enter email and password.");
+      setLoading(false);
+      return;
+    }
 
-    if (signInError) {
+    let data;
+    try {
+      const supabase = createClient();
+      const result = await supabase.auth.signInWithPassword({
+        email: nextEmail,
+        password,
+      });
+      data = result.data;
+      if (result.error) {
+        setError(result.error.message || "Invalid email or password");
+        setLoading(false);
+        return;
+      }
+    } catch {
+      setError("Can't reach the server. Check your connection and try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!data?.user) {
       setError("Invalid email or password");
       setLoading(false);
-    } else {
-      setLoading(false);
+      return;
     }
+
+    if (remember) {
+      localStorage.setItem(REMEMBER_KEY, nextEmail);
+    } else {
+      localStorage.removeItem(REMEMBER_KEY);
+    }
+
+    router.refresh();
+
+    let role = (data.user?.user_metadata?.role as string | undefined)?.toUpperCase();
+
+    if (!role) {
+      try {
+        const res = await fetch("/api/auth/profile", { credentials: "include" });
+        if (res.ok) {
+          const { user } = await res.json();
+          role = user.role?.toUpperCase();
+        }
+      } catch {
+        // Ignore and use default redirect below.
+      }
+    }
+
+    router.push(role === "ADMIN" ? "/admin" : "/dashboard");
+    setLoading(false);
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20 p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="flex justify-center mb-2">
-            <Logo variant="color" width={110} height={42} />
+    <AuthFormCard title="Welcome back" description="Sign in to continue.">
+      <form onSubmit={handleSubmit}>
+        <AuthFormFields>
+          {successMessage && (
+            <Alert variant="success">
+              <AlertDescription>{successMessage}</AlertDescription>
+            </Alert>
+          )}
+          {error && (
+            <Alert variant="destructive">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
+          <AuthField
+            id="email"
+            name="email"
+            type="email"
+            label="Email"
+            placeholder="you@example.com"
+            autoComplete="email"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+          />
+          <AuthPasswordField
+            id="password"
+            name="password"
+            label="Password"
+            placeholder="••••••••••"
+            autoComplete="current-password"
+            required
+          />
+          <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
+            <AuthLink href="/forgot-password">Forgot password?</AuthLink>
+            <div className="flex items-center justify-between gap-3 sm:justify-end">
+              <Label
+                htmlFor="remember"
+                className="cursor-pointer text-sm font-normal text-muted-foreground"
+              >
+                Remember me
+              </Label>
+              <Switch
+                id="remember"
+                checked={remember}
+                onCheckedChange={setRemember}
+                aria-label="Remember me"
+              />
+            </div>
           </div>
-          <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-          <CardDescription>Sign in to your Happy Outdoor account</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-          <CardContent className="space-y-4">
-            {error && (
-              <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input id="password" name="password" type="password" placeholder="Your password" required />
-            </div>
-          </CardContent>
-          <CardFooter className="flex flex-col gap-3 pt-6">
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Signing in..." : "Sign In"}
-            </Button>
-            <p className="text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link href="/register" className="text-primary hover:underline font-medium">
-                Sign up
-              </Link>
-            </p>
-          </CardFooter>
-        </form>
-      </Card>
-    </div>
+        </AuthFormFields>
+        <AuthFormActions>
+          <Button
+            type="submit"
+            className="h-12 w-full text-base font-semibold"
+            shape="pill"
+            disabled={loading}
+          >
+            {loading ? "Signing in…" : "Log in"}
+          </Button>
+          <AuthFooterText>
+            Don&apos;t have an account? <AuthLink href="/register">Sign up</AuthLink>
+          </AuthFooterText>
+        </AuthFormActions>
+      </form>
+    </AuthFormCard>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <AuthFormCard title="Welcome back" description="Sign in to continue.">
+      <AuthFormFields>
+        <div className="h-14 animate-pulse rounded-xl bg-muted" />
+        <div className="h-14 animate-pulse rounded-xl bg-muted" />
+      </AuthFormFields>
+    </AuthFormCard>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginForm />
+    </Suspense>
   );
 }

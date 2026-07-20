@@ -1,12 +1,16 @@
-import { auth } from "@/lib/auth";
-import { AdminShell } from "./AdminShell";
+import { AppLayout, AppPage } from "@/components/layout";
+import { requireAdminUser } from "@/lib/require-workspace";
 
 export default async function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
+  await requireAdminUser();
 
-  return <AdminShell session={session}>{children}</AdminShell>;
+  return (
+    <AppLayout>
+      <AppPage>{children}</AppPage>
+    </AppLayout>
+  );
 }
