@@ -76,22 +76,26 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
       <AppLayout>
         <AppPage>
           <PageStack>
-            <Card className="motion-enter">
-              <CardContent className="flex flex-col gap-5 p-6 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <Badge variant="draft" className="mb-3">
-                    Draft
-                  </Badge>
-                  <h2 className="text-heading-2">{design.name}</h2>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Unlock this design to view shopping links.
-                  </p>
-                </div>
-                <Button asChild>
+            <DashboardSection title={design.name} flat>
+              <section className="surface-panel motion-enter">
+                <Badge variant="draft" className="mb-3">
+                  Draft
+                </Badge>
+                <p className="text-body">Unlock to view shopping links.</p>
+                <Button asChild className="mt-4">
                   <Link href={getDesignUnlockHref(design.id)}>Unlock links</Link>
                 </Button>
-              </CardContent>
-            </Card>
+              </section>
+            </DashboardSection>
+
+            <div className="button-group">
+              <Button asChild variant="outline">
+                <Link href={`/designer?id=${design.id}`}>Edit design</Link>
+              </Button>
+              <Button asChild variant="outline">
+                <Link href="/designs">All designs</Link>
+              </Button>
+            </div>
           </PageStack>
         </AppPage>
       </AppLayout>
