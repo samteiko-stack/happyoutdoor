@@ -5,23 +5,10 @@ import Link from "next/link";
 import { ArrowRight, ExternalLink, ImageIcon } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { SnapshotThumbnail } from "@/components/dashboard/snapshot-thumbnail";
 import { formatUnlockPrice, getDesignProductSummary } from "@/lib/design-unlock";
 import { cn } from "@/lib/utils";
-
-type UnlockProduct = {
-  id: string;
-  name: string;
-  category: { name: string };
-  count: number;
-};
 
 type DesignUnlockPanelProps = {
   designId: string;
@@ -30,7 +17,6 @@ type DesignUnlockPanelProps = {
   balconyHeightCm: number;
   layoutData: string;
   thumbnailUrl: string | null;
-  products: UnlockProduct[];
   freeUnlockAllowed?: boolean;
   canceled?: boolean;
   className?: string;
@@ -44,14 +30,13 @@ export function DesignUnlockPanel({
   balconyHeightCm,
   layoutData,
   thumbnailUrl,
-  products,
   freeUnlockAllowed = false,
   canceled = false,
   className,
   onUnlocked,
 }: DesignUnlockPanelProps) {
   const [unlocking, setUnlocking] = useState(false);
-  const { itemCount, productCount } = getDesignProductSummary(layoutData);
+  const { productCount } = getDesignProductSummary(layoutData);
   const price = formatUnlockPrice();
 
   async function handlePreviewUnlock() {
@@ -69,84 +54,46 @@ export function DesignUnlockPanel({
   }
 
   return (
-    <div className={cn("motion-enter grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]", className)}>
-      <Card className="overflow-hidden py-0">
-        <CardContent className="p-0">
-          <div className="flex flex-col sm:flex-row">
-            <SnapshotThumbnail
-              src={thumbnailUrl}
-              alt={name}
-              className="w-full sm:w-56 md:w-64 shrink-0"
-              fallback={
-                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
-                  <ImageIcon width={24} height={24} className="opacity-50" />
-                  <span className="text-sm tabular-nums text-foreground">{itemCount}</span>
-                  <span className="text-caption">products</span>
-                </div>
-              }
-            />
-
-            <div className="flex min-w-0 flex-1 flex-col justify-center gap-4 p-5 sm:p-7">
-              <div>
-                <p className="text-overline">Draft design</p>
-                <h2 className="mt-2 text-heading-2">{name}</h2>
-                <p className="mt-1 text-body">
-                  {balconyWidthCm} × {balconyHeightCm} cm · {productCount} product
-                  {productCount === 1 ? "" : "s"} · {itemCount} placed
-                </p>
+    <Card className={cn("motion-enter overflow-hidden", className)}>
+      <CardContent className="flex flex-col gap-6 p-6 lg:flex-row lg:items-center lg:justify-between">
+        <div className="flex min-w-0 gap-4">
+          <SnapshotThumbnail
+            src={thumbnailUrl}
+            alt={name}
+            className="hidden w-32 shrink-0 sm:block"
+            fallback={
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-muted-foreground">
+                <ImageIcon width={20} height={20} className="opacity-50" />
+                <span className="text-sm tabular-nums text-foreground">{productCount}</span>
               </div>
+            }
+          />
 
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant="draft">Draft</Badge>
-                {itemCount > 0 && <Badge variant="neutral">{itemCount} items</Badge>}
-              </div>
-
-              {products.length > 0 ? (
-                <ul className="space-y-2 border-t border-border pt-4">
-                  {products.map((product) => (
-                    <li
-                      key={product.id}
-                      className="flex items-center justify-between gap-3 text-sm"
-                    >
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-foreground">{product.name}</p>
-                        <p className="truncate text-caption text-muted-foreground">
-                          {product.category.name}
-                        </p>
-                      </div>
-                      <Badge variant="secondary">×{product.count}</Badge>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="text-sm text-muted-foreground">
-                  Add products in the designer before unlocking links.
-                </p>
-              )}
-            </div>
+          <div className="min-w-0">
+            <Badge variant="draft" className="mb-3">
+              Draft
+            </Badge>
+            <h2 className="text-heading-2">{name}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {balconyWidthCm} × {balconyHeightCm} cm · {productCount} product
+              {productCount === 1 ? "" : "s"}
+            </p>
+            {productCount === 0 && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Add products in the designer first.
+              </p>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
 
-      <Card className="py-0">
-        <CardHeader className="border-b border-border pb-[var(--spacing-panel-y)] pt-[var(--spacing-panel-y)]">
-          <CardTitle>Unlock links</CardTitle>
-          <CardDescription>
-            One-time payment. Affiliate links for every product in this design.
-          </CardDescription>
-        </CardHeader>
-
-        <CardContent className="flex flex-col gap-5 py-[var(--spacing-panel-y)]">
+        <div className="flex w-full flex-col gap-4 lg:w-auto lg:min-w-[15rem]">
           {canceled && (
             <p className="motion-fade rounded-lg border border-border bg-muted px-3 py-2 text-sm text-muted-foreground">
-              Checkout canceled. You can try again when ready.
+              Checkout canceled.
             </p>
           )}
 
-          <div>
-            <p className="text-label">Price</p>
-            <p className="text-stat mt-2">{price}</p>
-          </div>
+          <p className="text-stat">{price}</p>
 
           <form action={`/api/checkout?designId=${designId}`} method="POST">
             <Button type="submit" className="w-full" size="lg" disabled={productCount === 0}>
@@ -167,11 +114,7 @@ export function DesignUnlockPanel({
             </Button>
           )}
 
-          <p className="text-caption">
-            Secure payment via Stripe. Links stay on this account.
-          </p>
-
-          <div className="button-group border-t border-border pt-5">
+          <div className="button-group">
             <Button asChild variant="outline">
               <Link href={`/designer?id=${designId}`}>Edit design</Link>
             </Button>
@@ -179,9 +122,9 @@ export function DesignUnlockPanel({
               <Link href="/designs">All designs</Link>
             </Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </div>
+      </CardContent>
+    </Card>
   );
 }
 
@@ -203,7 +146,7 @@ export function DesignUnlockedPanel({
           </Badge>
           <h2 className="text-heading-2">{name}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            Shopping links are ready for this design.
+            Shopping links are ready.
           </p>
         </div>
         <div className="button-group shrink-0">

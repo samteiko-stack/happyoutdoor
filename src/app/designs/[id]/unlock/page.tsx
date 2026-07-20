@@ -18,17 +18,10 @@ interface Design {
   thumbnailUrl: string | null;
 }
 
-interface Product {
-  id: string;
-  name: string;
-  category: { name: string };
-}
-
 function DesignUnlockContent({ id }: { id: string }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [design, setDesign] = useState<Design | null>(null);
-  const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const canceled = searchParams.get("canceled") === "true";
   const freeUnlockAllowed =
@@ -37,16 +30,9 @@ function DesignUnlockContent({ id }: { id: string }) {
 
   useEffect(() => {
     async function loadData() {
-      const [designRes, productsRes] = await Promise.all([
-        fetch(`/api/designs/${id}`),
-        fetch("/api/products"),
-      ]);
-
+      const designRes = await fetch(`/api/designs/${id}`);
       if (designRes.ok) {
         setDesign(await designRes.json());
-      }
-      if (productsRes.ok) {
-        setProducts(await productsRes.json());
       }
       setLoading(false);
     }
@@ -74,25 +60,6 @@ function DesignUnlockContent({ id }: { id: string }) {
     );
   }
 
-  const items = (() => {
-    try {
-      return JSON.parse(design.layoutData || "[]") as { productId: string }[];
-    } catch {
-      return [];
-    }
-  })();
-
-  const usedProducts = [...new Set(items.map((item) => item.productId))]
-    .map((productId) => {
-      const product = products.find((entry) => entry.id === productId);
-      if (!product) return null;
-      return {
-        ...product,
-        count: items.filter((item) => item.productId === productId).length,
-      };
-    })
-    .filter(Boolean) as Array<Product & { count: number }>;
-
   return (
     <AppLayout>
       <AppPage>
@@ -107,7 +74,6 @@ function DesignUnlockContent({ id }: { id: string }) {
               balconyHeightCm={design.balconyHeightCm}
               layoutData={design.layoutData}
               thumbnailUrl={design.thumbnailUrl}
-              products={usedProducts}
               freeUnlockAllowed={freeUnlockAllowed}
               canceled={canceled}
               onUnlocked={() => router.push(`/designs/${design.id}/links`)}
