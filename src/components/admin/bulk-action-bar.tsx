@@ -32,7 +32,7 @@ function BulkBarButton({
       type="button"
       onClick={onClick}
       className={cn(
-        "motion-interactive inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium",
+        "motion-interactive inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium",
         destructive
           ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
           : "border border-primary-foreground/20 text-primary-foreground hover:bg-primary-foreground/10"
@@ -78,13 +78,13 @@ export function BulkActionBar({
     >
       <div
         className={cn(
-          "motion-enter motion-surface pointer-events-auto flex max-w-full items-center gap-1 rounded-full bg-foreground px-2 py-1.5 ring-1 ring-primary-foreground/10"
+          "motion-enter motion-surface pointer-events-auto flex max-w-full items-center gap-1 rounded-lg bg-foreground px-2 py-1.5 ring-1 ring-primary-foreground/10"
         )}
       >
         <button
           type="button"
           onClick={onClear}
-          className="motion-interactive inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-foreground/10"
+          className="motion-interactive inline-flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm font-medium text-primary-foreground hover:bg-primary-foreground/10"
         >
           <X className="size-4 shrink-0" />
           <span className="whitespace-nowrap">

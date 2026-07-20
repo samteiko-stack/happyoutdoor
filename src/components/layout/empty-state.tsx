@@ -23,7 +23,7 @@ export function EmptyState({ icon, title, description, action, className }: Empt
       )}
     >
       <div className="max-w-md mx-auto">
-        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-muted text-foreground">
+        <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-muted text-foreground">
           {icon}
         </div>
         <h2 className="text-heading-2 mb-3">{title}</h2>

@@ -66,7 +66,6 @@ export default function ForgotPasswordPage() {
             type="button"
             variant="outline"
             className="h-12 w-full text-base font-semibold"
-            shape="pill"
             onClick={() => {
               setSent(false);
               setEmail("");
@@ -110,7 +109,6 @@ export default function ForgotPasswordPage() {
           <Button
             type="submit"
             className="h-12 w-full text-base font-semibold"
-            shape="pill"
             disabled={loading}
           >
             {loading ? "Sending link…" : "Send reset link"}

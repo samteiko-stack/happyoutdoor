@@ -19,7 +19,7 @@ export function AdminAddCard({ href, label, className }: AdminAddCardProps) {
         className
       )}
     >
-      <span className="flex size-10 items-center justify-center rounded-full border border-border bg-card">
+      <span className="flex size-10 items-center justify-center rounded-lg border border-border bg-card">
         <Plus className="size-5" strokeWidth={1.75} />
       </span>
       <span className="text-sm font-medium">{label}</span>

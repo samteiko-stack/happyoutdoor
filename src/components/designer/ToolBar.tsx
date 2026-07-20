@@ -182,7 +182,7 @@ export function ToolBar() {
 
       <div className="flex-1" />
 
-      <div className="rounded-full border border-border bg-card px-3 py-1.5 text-xs font-medium tabular-nums text-foreground">
+      <div className="rounded-lg border border-border bg-card px-3 py-1.5 text-xs font-medium tabular-nums text-foreground">
         {items.length} item{items.length !== 1 ? "s" : ""}
       </div>
     </div>

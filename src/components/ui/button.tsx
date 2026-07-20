@@ -35,10 +35,10 @@ const buttonVariants = cva(
         "icon-lg": "size-10",
       },
       shape: {
-        default: "rounded-full",
+        default: "rounded-lg",
         pill: "rounded-full",
         square: "rounded-md",
-        lg: "rounded-lg",
+        lg: "rounded-xl",
       },
     },
     defaultVariants: {

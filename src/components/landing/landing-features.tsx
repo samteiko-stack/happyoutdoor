@@ -28,7 +28,7 @@ export function LandingFeatures() {
                       key={item}
                       className="flex items-start gap-3 text-size-regular text-style-muted"
                     >
-                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full bg-[var(--landing-accent)]/20">
+                      <span className="mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-md bg-[var(--landing-accent)]/20">
                         <Check
                           className="size-3 text-color-accent"
                           strokeWidth={2.5}

@@ -111,7 +111,6 @@ export default function RegisterPage() {
           <Button
             type="submit"
             className="h-12 w-full text-base font-semibold"
-            shape="pill"
             disabled={loading}
           >
             {loading ? "Creating account…" : "Sign up"}

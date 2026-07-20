@@ -164,7 +164,6 @@ function LoginForm() {
           <Button
             type="submit"
             className="h-12 w-full text-base font-semibold"
-            shape="pill"
             disabled={loading}
           >
             {loading ? "Signing in…" : "Log in"}

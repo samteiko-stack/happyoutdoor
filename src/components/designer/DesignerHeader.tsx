@@ -82,7 +82,7 @@ export function DesignerHeader({
           <button
             type="button"
             onClick={() => setEditingName(true)}
-            className="designer-header-name-btn motion-interactive group flex min-w-0 items-center gap-2 rounded-full px-2.5 py-1.5"
+            className="designer-header-name-btn motion-interactive group flex min-w-0 items-center gap-2 rounded-lg px-2.5 py-1.5"
           >
             <span className="designer-header-name text-base font-semibold">{designName}</span>
             {isDirty ? (

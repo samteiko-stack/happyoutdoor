@@ -37,7 +37,7 @@ export function LandingNav() {
     <header className="fixed inset-x-0 top-0 z-50 px-[var(--padding-global)] pt-4">
       <div
         className={cn(
-          "motion-surface mx-auto flex h-16 max-w-[var(--container-large)] items-center gap-3 rounded-full border px-4 backdrop-blur-xl sm:px-6",
+          "motion-surface mx-auto flex h-16 max-w-[var(--container-large)] items-center gap-3 rounded-2xl border px-4 backdrop-blur-xl sm:px-6",
           scrolled
             ? "border-white/15 bg-black/55 shadow-[0_8px_32px_rgb(0_0_0/0.35)]"
             : "border-[var(--landing-glass-border)] bg-[var(--landing-glass)]"

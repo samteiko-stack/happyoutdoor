@@ -91,7 +91,7 @@ export default function ResetPasswordPage() {
           </Alert>
         </AuthFormFields>
         <AuthFormActions>
-          <Button asChild className="h-12 w-full text-base font-semibold" shape="pill">
+          <Button asChild className="h-12 w-full text-base font-semibold">
             <Link href="/forgot-password">Request new link</Link>
           </Button>
           <AuthFooterText>
@@ -135,7 +135,6 @@ export default function ResetPasswordPage() {
           <Button
             type="submit"
             className="h-12 w-full text-base font-semibold"
-            shape="pill"
             disabled={loading}
           >
             {loading ? "Updating password…" : "Update password"}

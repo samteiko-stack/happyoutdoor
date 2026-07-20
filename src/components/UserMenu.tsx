@@ -108,12 +108,12 @@ export function UserMenu({ variant = "icon", className, onNavigate }: UserMenuPr
           >
             <UserAvatar id={user.id} name={user.name} email={user.email} className="shrink-0" />
             <div className="hidden min-w-0 flex-col justify-center gap-0.5 text-left lg:flex">
-              <span className="truncate text-xs font-medium leading-none text-foreground">
+              <span className="truncate text-sm font-medium leading-none text-foreground">
                 {user.name || "User"}
               </span>
-              <span className="truncate text-[11px] leading-none text-muted-foreground">{roleLabel}</span>
+              <span className="truncate text-xs leading-none text-muted-foreground">{roleLabel}</span>
             </div>
-            <ChevronDown className="size-3.5 shrink-0 text-muted-foreground" />
+            <ChevronDown className="size-4 shrink-0 text-muted-foreground" />
           </Button>
         ) : variant === "sidebar" ? (
           <Button
