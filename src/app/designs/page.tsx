@@ -1,10 +1,16 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { toast } from "sonner";
-import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
+import { AppLayout, AppPage, LoadingState } from "@/components/layout";
 import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
 import { DashboardEmptyState } from "@/components/dashboard/dashboard-empty-state";
+import { ScrollRail } from "@/components/ui/scroll-rail";
+import {
+  getDesignLinksHref,
+  getDesignUnlockHref,
+} from "@/lib/design-unlock";
 
 interface Design {
   id: string;
@@ -63,16 +69,15 @@ export default function DesignsPage() {
   return (
     <AppLayout>
       <AppPage>
-        <PageStack>
-          {meta && <p className="text-body">{meta}</p>}
+        {meta && <p className="mb-4 text-sm text-muted-foreground">{meta}</p>}
 
-          {designs.length === 0 ? (
-            <DashboardEmptyState />
-          ) : (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-              {designs.map((design) => (
+        {designs.length === 0 ? (
+          <DashboardEmptyState />
+        ) : (
+          <ScrollRail itemWidth={248} bleed={false}>
+            {designs.map((design) => (
+              <div key={design.id} className="group space-y-2">
                 <DesignPreviewCard
-                  key={design.id}
                   id={design.id}
                   name={design.name}
                   balconyWidthCm={design.balconyWidthCm}
@@ -81,13 +86,36 @@ export default function DesignsPage() {
                   isPaid={design.isPaid}
                   thumbnailUrl={design.thumbnailUrl}
                   layoutData={design.layoutData}
-                  onDelete={() => handleDelete(design.id, design.name)}
                   className="h-full"
                 />
-              ))}
-            </div>
-          )}
-        </PageStack>
+                <div className="flex items-center gap-3 px-1 opacity-100 md:opacity-0 md:transition-opacity md:group-hover:opacity-100">
+                  {design.isPaid ? (
+                    <Link
+                      href={getDesignLinksHref(design.id)}
+                      className="text-xs font-medium text-primary hover:text-brand-moss-dark"
+                    >
+                      Links
+                    </Link>
+                  ) : (
+                    <Link
+                      href={getDesignUnlockHref(design.id)}
+                      className="text-xs font-medium text-primary hover:text-brand-moss-dark"
+                    >
+                      Unlock links
+                    </Link>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(design.id, design.name)}
+                    className="text-xs font-medium text-muted-foreground hover:text-destructive"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </ScrollRail>
+        )}
       </AppPage>
     </AppLayout>
   );
