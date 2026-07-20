@@ -23,7 +23,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
 
         <div className="relative z-10 p-10 xl:p-12">
           <Link href="/login" className="inline-flex w-fit">
-            <Logo variant="light" width={156} height={58} />
+            <Logo variant="light" width={156} height={46} className="h-12 w-auto" />
           </Link>
         </div>
 
@@ -38,7 +38,7 @@ export function AuthShell({ children }: { children: React.ReactNode }) {
       <main className="flex min-h-screen flex-col bg-card">
         <div className="flex justify-center px-6 pt-10 lg:hidden">
           <Link href="/login">
-            <Logo variant="dark" width={140} height={52} />
+            <Logo variant="dark" width={140} height={42} className="h-10 w-auto" />
           </Link>
         </div>
 

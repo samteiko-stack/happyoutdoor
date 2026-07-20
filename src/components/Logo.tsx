@@ -29,8 +29,7 @@ export function Logo({ variant = "dark", width = 120, height = 45, className }: 
       alt="Happy Outdoor"
       width={isMark ? height : width}
       height={height}
-      style={{ width: "auto", height: "auto" }}
-      className={cn(isMark && "aspect-square object-contain", className)}
+      className={cn("block h-auto max-w-none object-contain", isMark && "aspect-square", className)}
       priority
     />
   );

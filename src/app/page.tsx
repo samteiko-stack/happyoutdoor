@@ -38,7 +38,14 @@ export default async function ComingSoonPage() {
       <div className="relative z-10 min-h-screen flex flex-col justify-between px-10 md:px-20 py-12">
         {/* Logo */}
         <div>
-          <Image src="/logo.svg" alt="Happy Outdoors" width={160} height={60} priority />
+          <Image
+            src="/logo.svg"
+            alt="Happy Outdoors"
+            width={160}
+            height={60}
+            className="h-12 w-auto md:h-14"
+            priority
+          />
         </div>
 
         {/* Main text */}
