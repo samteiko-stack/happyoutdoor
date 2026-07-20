@@ -7,9 +7,7 @@ import { DashboardBanner } from "@/components/dashboard/dashboard-banner";
 import { DashboardStarters } from "@/components/dashboard/dashboard-starters";
 import { DashboardSection } from "@/components/dashboard/dashboard-section";
 import { ScrollRail } from "@/components/ui/scroll-rail";
-import { DashboardContinue } from "@/components/dashboard/dashboard-continue";
 import { DesignPreviewCard } from "@/components/dashboard/design-preview-card";
-import { getDesignProductSummary } from "@/lib/design-unlock";
 import { TemplateCard } from "@/components/dashboard/template-card";
 
 export const dynamic = "force-dynamic";
