@@ -57,19 +57,6 @@ export default async function DashboardPage() {
           />
 
           {hasDesigns && (
-            <DashboardContinue
-              id={designs[0].id}
-              name={designs[0].name}
-              balconyWidthCm={designs[0].balconyWidthCm}
-              balconyHeightCm={designs[0].balconyHeightCm}
-              updatedAt={designs[0].updatedAt}
-              isPaid={designs[0].isPaid}
-              thumbnailUrl={designs[0].thumbnailUrl}
-              itemCount={getDesignProductSummary(designs[0].layoutData).itemCount}
-            />
-          )}
-
-          {hasDesigns && (
             <DashboardSection title="Designs" href="/designs">
               <ScrollRail visibleCount={5} bleed={false}>
                 {listedDesigns.map((design, index) => (

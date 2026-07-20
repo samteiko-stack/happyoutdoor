@@ -24,10 +24,6 @@ interface DesignPreviewCardProps {
   className?: string;
 }
 
-function getItemCount(layoutData: string) {
-  return getDesignProductSummary(layoutData).itemCount;
-}
-
 export function DesignPreviewCard({
   id,
   name,
@@ -108,8 +104,4 @@ export function DesignPreviewCard({
       </div>
     </article>
   );
-}
-
-export function getDesignItemCount(layoutData: string) {
-  return getItemCount(layoutData);
 }
