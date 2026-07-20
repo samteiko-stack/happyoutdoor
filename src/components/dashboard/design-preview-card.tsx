@@ -21,6 +21,7 @@ interface DesignPreviewCardProps {
   thumbnailUrl: string | null;
   layoutData: string;
   featured?: boolean;
+  onDelete?: () => void;
   className?: string;
 }
 
@@ -34,6 +35,7 @@ export function DesignPreviewCard({
   thumbnailUrl,
   layoutData,
   featured = false,
+  onDelete,
   className,
 }: DesignPreviewCardProps) {
   const itemCount = getDesignProductSummary(layoutData).itemCount;
@@ -101,6 +103,15 @@ export function DesignPreviewCard({
         >
           Edit
         </Link>
+        {onDelete ? (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="text-xs font-medium text-muted-foreground hover:text-destructive"
+          >
+            Delete
+          </button>
+        ) : null}
       </div>
     </article>
   );

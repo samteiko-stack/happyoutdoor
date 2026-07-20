@@ -39,16 +39,30 @@ export default function DesignLinksPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
+    setDesign(null);
+
     async function loadData() {
-      const [designRes, productsRes] = await Promise.all([
-        fetch(`/api/designs/${id}`),
-        fetch("/api/products"),
-      ]);
-      if (designRes.ok) setDesign(await designRes.json());
-      if (productsRes.ok) setProducts(await productsRes.json());
-      setLoading(false);
+      try {
+        const [designRes, productsRes] = await Promise.all([
+          fetch(`/api/designs/${id}`, { cache: "no-store" }),
+          fetch("/api/products", { cache: "no-store" }),
+        ]);
+        if (cancelled) return;
+        if (designRes.ok) setDesign(await designRes.json());
+        if (productsRes.ok) setProducts(await productsRes.json());
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
     }
-    loadData();
+
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) {

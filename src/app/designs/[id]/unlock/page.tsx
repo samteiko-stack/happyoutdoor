@@ -4,8 +4,10 @@ import { Suspense, use, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AppLayout, AppPage, LoadingState, PageStack } from "@/components/layout";
 import {
-  DesignUnlockPanel,
-  DesignUnlockedPanel,
+  DesignUnlockActions,
+  DesignUnlockCheckout,
+  DesignUnlockPreview,
+  DesignUnlockedCard,
 } from "@/components/designs/design-unlock-panel";
 
 interface Design {
@@ -16,6 +18,7 @@ interface Design {
   isPaid: boolean;
   layoutData: string;
   thumbnailUrl: string | null;
+  updatedAt: string;
 }
 
 function DesignUnlockContent({ id }: { id: string }) {
@@ -29,15 +32,33 @@ function DesignUnlockContent({ id }: { id: string }) {
     process.env.NEXT_PUBLIC_ALLOW_FREE_UNLOCK === "true";
 
   useEffect(() => {
+    let cancelled = false;
+
+    setLoading(true);
+    setDesign(null);
+
     async function loadData() {
-      const designRes = await fetch(`/api/designs/${id}`);
-      if (designRes.ok) {
-        setDesign(await designRes.json());
+      try {
+        const designRes = await fetch(`/api/designs/${id}`, { cache: "no-store" });
+        if (cancelled) return;
+
+        if (designRes.ok) {
+          setDesign(await designRes.json());
+        } else {
+          setDesign(null);
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
 
-    loadData();
+    void loadData();
+
+    return () => {
+      cancelled = true;
+    };
   }, [id]);
 
   if (loading) {
@@ -65,20 +86,29 @@ function DesignUnlockContent({ id }: { id: string }) {
       <AppPage>
         <PageStack>
           {design.isPaid ? (
-            <DesignUnlockedPanel designId={design.id} name={design.name} />
+            <DesignUnlockedCard designId={design.id} name={design.name} />
           ) : (
-            <DesignUnlockPanel
-              designId={design.id}
+            <DesignUnlockPreview
               name={design.name}
               balconyWidthCm={design.balconyWidthCm}
               balconyHeightCm={design.balconyHeightCm}
               layoutData={design.layoutData}
               thumbnailUrl={design.thumbnailUrl}
+              updatedAt={design.updatedAt}
+            />
+          )}
+
+          {!design.isPaid && (
+            <DesignUnlockCheckout
+              designId={design.id}
+              layoutData={design.layoutData}
               freeUnlockAllowed={freeUnlockAllowed}
               canceled={canceled}
               onUnlocked={() => router.push(`/designs/${design.id}/links`)}
             />
           )}
+
+          <DesignUnlockActions designId={design.id} showEdit={!design.isPaid} />
         </PageStack>
       </AppPage>
     </AppLayout>
