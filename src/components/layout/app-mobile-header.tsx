@@ -18,7 +18,7 @@ export function AppMobileHeader() {
     <header className="sticky top-0 z-30 flex shrink-0 flex-col border-b border-border bg-card md:hidden">
       <div className="flex h-14 items-center justify-between gap-3 px-[var(--spacing-page-x)]">
         <Link href={getHomeHref(isAdmin)} className="inline-flex shrink-0">
-          <Logo variant="dark" width={108} height={40} />
+          <Logo variant="dark" size="nav" />
         </Link>
         <UserMenu variant="icon" />
       </div>

@@ -49,7 +49,7 @@ export function AppSidebar() {
 
       <div className="px-5 pt-7 pb-5">
         <Link href={getHomeHref(isAdmin)} className="inline-flex">
-          <Logo variant="light" width={128} height={46} />
+          <Logo variant="light" size="sidebar" />
         </Link>
       </div>
 

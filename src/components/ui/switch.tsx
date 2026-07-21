@@ -8,10 +8,40 @@ import { cn } from "@/lib/utils"
 function Switch({
   className,
   size = "default",
+  checked,
+  defaultChecked,
+  onCheckedChange,
   ...props
 }: React.ComponentProps<typeof SwitchPrimitive.Root> & {
   size?: "sm" | "default"
 }) {
+  const isControlled = checked !== undefined
+  const [optimisticChecked, setOptimisticChecked] = React.useState(
+    checked ?? defaultChecked ?? false
+  )
+  const pendingRef = React.useRef(false)
+
+  React.useEffect(() => {
+    if (isControlled && !pendingRef.current) {
+      setOptimisticChecked(checked)
+    }
+  }, [checked, isControlled])
+
+  function handleCheckedChange(next: boolean) {
+    const previous = optimisticChecked
+    setOptimisticChecked(next)
+
+    const result = onCheckedChange?.(next)
+    if (result && typeof (result as PromiseLike<void>).then === "function") {
+      pendingRef.current = true
+      Promise.resolve(result)
+        .catch(() => setOptimisticChecked(previous))
+        .finally(() => {
+          pendingRef.current = false
+        })
+    }
+  }
+
   return (
     <SwitchPrimitive.Root
       data-slot="switch"
@@ -20,6 +50,9 @@ function Switch({
         "motion-toggle-track peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50 dark:data-[state=unchecked]:bg-input/80 group/switch inline-flex shrink-0 items-center rounded-full border border-transparent outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50 data-[size=default]:h-6 data-[size=default]:w-11 data-[size=sm]:h-3.5 data-[size=sm]:w-6",
         className
       )}
+      checked={isControlled ? optimisticChecked : checked}
+      defaultChecked={defaultChecked}
+      onCheckedChange={handleCheckedChange}
       {...props}
     >
       <SwitchPrimitive.Thumb

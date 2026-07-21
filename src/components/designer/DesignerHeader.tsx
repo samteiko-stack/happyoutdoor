@@ -59,7 +59,7 @@ export function DesignerHeader({
           onClick={() => onNavigate(homeHref)}
           className="motion-interactive shrink-0 opacity-95 hover:opacity-100"
         >
-          <Logo variant="dark" width={118} height={42} />
+          <Logo variant="dark" size="nav" />
         </button>
 
         <div className="hidden h-6 w-px bg-border sm:block" />

@@ -22,6 +22,7 @@ import {
   useTablePagination,
   useTableSelection,
 } from "@/components/admin";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface Template {
   id: string;
@@ -55,6 +56,7 @@ export function TemplatesPageClient({
   const [searchQuery, setSearchQuery] = useState("");
   const [filterPublished, setFilterPublished] = useState<string>("all");
   const searchParams = useSearchParams();
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const fetchTemplates = useCallback(async () => {
     const res = await fetch("/api/admin/templates");
@@ -113,20 +115,36 @@ export function TemplatesPageClient({
     setLoading(false);
   }
 
-  async function handleTogglePublish(template: Template) {
-    const res = await fetch(`/api/admin/templates/${template.id}`, {
+  async function handleTogglePublish(templateId: string, next: boolean) {
+    const snapshot = templates;
+    setTemplates((current) =>
+      current.map((template) =>
+        template.id === templateId ? { ...template, isPublished: next } : template
+      )
+    );
+
+    const res = await fetch(`/api/admin/templates/${templateId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ isPublished: !template.isPublished }),
+      body: JSON.stringify({ isPublished: next }),
     });
-    if (res.ok) {
-      toast.success(template.isPublished ? "Template unpublished" : "Template published");
-      fetchTemplates();
+
+    if (!res.ok) {
+      setTemplates(snapshot);
+      toast.error("Failed to update template");
+      throw new Error("Failed to update template");
     }
+
+    toast.success(next ? "Template published" : "Template unpublished");
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this template?")) return;
+    const confirmed = await confirm({
+      title: "Delete template?",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const res = await fetch(`/api/admin/templates/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Template deleted");
@@ -168,7 +186,12 @@ export function TemplatesPageClient({
   const selection = useTableSelection(pageIds);
 
   async function handleBulkDelete() {
-    if (!confirm(`Delete ${selection.selectedCount} templates?`)) return;
+    const confirmed = await confirm({
+      title: `Delete ${selection.selectedCount} templates?`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const results = await Promise.all(
       selection.selectedIds.map((id) =>
         fetch(`/api/admin/templates/${id}`, { method: "DELETE" })
@@ -248,7 +271,7 @@ export function TemplatesPageClient({
             <TableCell>
               <Switch
                 checked={template.isPublished}
-                onCheckedChange={() => handleTogglePublish(template)}
+                onCheckedChange={(next) => handleTogglePublish(template.id, next)}
               />
             </TableCell>
             <TableCellActions>
@@ -310,6 +333,7 @@ export function TemplatesPageClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </PageStack>
   );
 }

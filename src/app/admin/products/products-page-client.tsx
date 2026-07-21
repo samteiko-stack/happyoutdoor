@@ -22,6 +22,7 @@ import {
   useTableSelection,
   ProductThumbnail,
 } from "@/components/admin";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface Category {
   id: string;
@@ -78,6 +79,7 @@ export function ProductsPageClient({
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [sortBy, setSortBy] = useState<"name" | "price" | "category">("name");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const fetchProducts = useCallback(async () => {
     const res = await fetch("/api/admin/products");
@@ -265,7 +267,12 @@ export function ProductsPageClient({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Are you sure you want to delete this product?")) return;
+    const confirmed = await confirm({
+      title: "Delete product?",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const res = await fetch(`/api/admin/products/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Product deleted");
@@ -276,7 +283,12 @@ export function ProductsPageClient({
   }
 
   async function handleBulkDelete() {
-    if (!confirm(`Delete ${selection.selectedCount} products?`)) return;
+    const confirmed = await confirm({
+      title: `Delete ${selection.selectedCount} products?`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const results = await Promise.all(
       selection.selectedIds.map((id) =>
         fetch(`/api/admin/products/${id}`, { method: "DELETE" })
@@ -572,6 +584,7 @@ export function ProductsPageClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </PageStack>
   );
 }

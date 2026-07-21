@@ -17,6 +17,7 @@ import {
   useTablePagination,
   useTableSelection,
 } from "@/components/admin";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface Category {
   id: string;
@@ -38,6 +39,7 @@ export function CategoriesPageClient({ initialCategories }: CategoriesPageClient
   const [form, setForm] = useState({ name: "", slug: "", icon: "", sortOrder: 0 });
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const fetchCategories = useCallback(async () => {
     const res = await fetch("/api/admin/categories");
@@ -108,7 +110,13 @@ export function CategoriesPageClient({ initialCategories }: CategoriesPageClient
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this category? All products in it will be deleted too.")) return;
+    const confirmed = await confirm({
+      title: "Delete category?",
+      description: "All products in this category will also be deleted.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const res = await fetch(`/api/admin/categories/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Category deleted");
@@ -119,7 +127,13 @@ export function CategoriesPageClient({ initialCategories }: CategoriesPageClient
   }
 
   async function handleBulkDelete() {
-    if (!confirm(`Delete ${selection.selectedCount} categories? Products in them will also be deleted.`)) return;
+    const confirmed = await confirm({
+      title: `Delete ${selection.selectedCount} categories?`,
+      description: "Products in these categories will also be deleted.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const results = await Promise.all(
       selection.selectedIds.map((id) =>
         fetch(`/api/admin/categories/${id}`, { method: "DELETE" })
@@ -226,6 +240,7 @@ export function CategoriesPageClient({ initialCategories }: CategoriesPageClient
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </PageStack>
   );
 }

@@ -11,6 +11,7 @@ import {
   getDesignLinksHref,
   getDesignUnlockHref,
 } from "@/lib/design-unlock";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 
 interface Design {
   id: string;
@@ -26,6 +27,7 @@ interface Design {
 export default function DesignsPage() {
   const [designs, setDesigns] = useState<Design[]>([]);
   const [loading, setLoading] = useState(true);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const fetchDesigns = useCallback(async () => {
     const res = await fetch("/api/designs", { cache: "no-store" });
@@ -40,7 +42,12 @@ export default function DesignsPage() {
   }, [fetchDesigns]);
 
   async function handleDelete(id: string, name: string) {
-    if (!confirm(`Delete "${name}"?`)) return;
+    const confirmed = await confirm({
+      title: `Delete "${name}"?`,
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const res = await fetch(`/api/designs/${id}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("Design deleted");
@@ -117,6 +124,7 @@ export default function DesignsPage() {
           </ScrollRail>
         )}
       </AppPage>
+      <ConfirmDialog />
     </AppLayout>
   );
 }

@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { Plus, User, AlertTriangle } from "lucide-react";
 import { PageStack } from "@/components/layout";
 import { DataTableCard, RowActions, TableRowDefault, TableCellActions, useTablePagination } from "@/components/admin";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 import { useAuth } from "@/components/providers/SupabaseProvider";
 
 interface Admin {
@@ -35,6 +36,7 @@ export default function AdminSettingsPage() {
   const [newAdminName, setNewAdminName] = useState("");
   const [addingAdmin, setAddingAdmin] = useState(false);
   const [confirmAdminAdd, setConfirmAdminAdd] = useState(false);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   // Update profile state
   const [profileName, setProfileName] = useState("");
@@ -141,9 +143,12 @@ export default function AdminSettingsPage() {
       return;
     }
 
-    if (!confirm("Are you sure you want to remove this admin?")) {
-      return;
-    }
+    const confirmed = await confirm({
+      title: "Remove admin?",
+      confirmLabel: "Remove",
+      destructive: true,
+    });
+    if (!confirmed) return;
 
     try {
       const res = await fetch(`/api/admin/remove-admin/${adminId}`, {
@@ -459,6 +464,7 @@ export default function AdminSettingsPage() {
           </TableRowDefault>
         ))}
       </DataTableCard>
+      <ConfirmDialog />
     </PageStack>
   );
 }

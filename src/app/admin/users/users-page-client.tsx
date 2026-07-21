@@ -18,6 +18,7 @@ import {
   useTablePagination,
   useTableSelection,
 } from "@/components/admin";
+import { useConfirmDialog } from "@/components/ui/use-confirm-dialog";
 import { AlertTriangle } from "lucide-react";
 
 interface User {
@@ -40,6 +41,7 @@ export function UsersPageClient({
   const [confirmAdminGrant, setConfirmAdminGrant] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
+  const { confirm, ConfirmDialog: DeleteConfirmDialog } = useConfirmDialog();
 
   const fetchUsers = useCallback(async () => {
     const res = await fetch("/api/admin/users");
@@ -113,7 +115,13 @@ export function UsersPageClient({
   }
 
   async function handleDelete(userId: string) {
-    if (!confirm("Delete this user and all their designs? This cannot be undone.")) return;
+    const confirmed = await confirm({
+      title: "Delete user?",
+      description: "This removes the user and all their designs. This cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const res = await fetch(`/api/admin/users/${userId}`, { method: "DELETE" });
     if (res.ok) {
       toast.success("User deleted");
@@ -124,7 +132,13 @@ export function UsersPageClient({
   }
 
   async function handleBulkDelete() {
-    if (!confirm(`Delete ${selection.selectedCount} users and all their designs? This cannot be undone.`)) return;
+    const confirmed = await confirm({
+      title: `Delete ${selection.selectedCount} users?`,
+      description: "This removes each user and all their designs. This cannot be undone.",
+      confirmLabel: "Delete",
+      destructive: true,
+    });
+    if (!confirmed) return;
     const results = await Promise.all(
       selection.selectedIds.map((id) =>
         fetch(`/api/admin/users/${id}`, { method: "DELETE" })
@@ -249,6 +263,7 @@ export function UsersPageClient({
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <DeleteConfirmDialog />
     </PageStack>
   );
 }
